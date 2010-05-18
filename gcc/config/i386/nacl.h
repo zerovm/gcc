@@ -26,6 +26,48 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (NativeClient)");
 
+/* Provide a STARTFILE_SPEC.  Here we add
+   the GNU/Linux magical crtbegin.o file (see crtstuff.c) which provides part of
+   the support for getting C++ file-scope static object constructed before
+   entering `main'.  */
+   
+#undef	STARTFILE_SPEC
+#if defined HAVE_LD_PIE
+#define STARTFILE_SPEC \
+  "%{!shared: %{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}} \
+   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+#else
+#define STARTFILE_SPEC \
+  "%{!shared: %{pg|p|profile:gcrt1.o%s;:crt1.o%s}} \
+   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+#endif
+
+/* Provide a ENDFILE_SPEC.  Here we tack on
+   the GNU/Linux magical crtend.o file (see crtstuff.c) which provides part of
+   the support for getting C++ file-scope static object constructed before
+   entering `main', followed by a normal GNU/Linux "finalizer" file, `crtn.o'.
+   TODO(pasko): add -ffast-math support to ENDFILE_SPEC.
+   */
+
+#undef	ENDFILE_SPEC
+#define ENDFILE_SPEC \
+  "%{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
+
+/* This is for -profile to use -lc_p instead of -lc.  */
+#ifndef CC1_SPEC
+#define CC1_SPEC "%{profile:-p}"
+#endif
+
+/* The GNU C++ standard library requires that these macros be defined.  */
+#undef CPLUSPLUS_CPP_SPEC
+#define CPLUSPLUS_CPP_SPEC "-D_GNU_SOURCE %(cpp)"
+
+#undef	LIB_SPEC
+#define LIB_SPEC \
+  "%{pthread:-lpthread} \
+   %{shared:-lc} \
+   %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}}"
+
 /* Pass the NativeClient specific options to the assembler */
 #undef  ASM_SPEC
 #define ASM_SPEC \
@@ -33,7 +75,8 @@ Boston, MA 02111-1307, USA.  */
   "%{fnacl-library-mode:-nacl-library-mode} " \
   "%{fnacl-align-16:-nacl-align=4} " \
   "%{fnacl-align-32:-nacl-align=5} " \
-  "%{Ym,*} %{Yd,*} %{Wa,*:%*}"
+  "%{Ym,*} %{Yd,*} %{Wa,*:%*} %{m32:--32} %{m64:--64} " \
+  "%{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
 
 /* `crt_platform' contains low-level platform-specific intrinsics in C. */
 #undef	LIB_SPEC
@@ -46,14 +89,94 @@ Boston, MA 02111-1307, USA.  */
    -lcrt_platform \
    %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}"
 
-/*
- * Set the linker emulation to be elf_nacl rather than linux.h's default
- * (elf_i386).
- */
-#ifdef LINK_EMULATION
-#undef LINK_EMULATION
+/* Define this so we can compile MS code for use with WINE.  */
+#define HANDLE_PRAGMA_PACK_PUSH_POP
+
+#if defined(HAVE_LD_EH_FRAME_HDR)
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
 #endif
-#define LINK_EMULATION "elf_nacl"
+
+/* Use --as-needed -lgcc_s for eh support.  */
+#ifdef HAVE_LD_AS_NEEDED
+#define USE_LD_AS_NEEDED 1
+#endif
+
+/* TODO(pasko): replace LINUX_DYNAMIC_LINKER with NACL_DYNAMIC_LINKER when we
+ * implement dynamic linking.
+ */
+
+/* Determine which dynamic linker to use depending on whether GLIBC or
+   uClibc is the default C library and whether -muclibc or -mglibc has
+   been passed to change the default.  */
+#if UCLIBC_DEFAULT
+#define CHOOSE_DYNAMIC_LINKER(G, U) "%{mglibc:%{muclibc:%e-mglibc and -muclibc used together}" G ";:" U "}"
+#else
+#define CHOOSE_DYNAMIC_LINKER(G, U) "%{muclibc:%{mglibc:%e-mglibc and -muclibc used together}" U ";:" G "}"
+#endif
+
+/* For most targets the following definitions suffice;
+   GLIBC_DYNAMIC_LINKER must be defined for each target using them, or
+   GLIBC_DYNAMIC_LINKER32 and GLIBC_DYNAMIC_LINKER64 for targets
+   supporting both 32-bit and 64-bit compilation.  */
+#define UCLIBC_DYNAMIC_LINKER "/lib/ld-uClibc.so.0"
+#define UCLIBC_DYNAMIC_LINKER32 "/lib/ld-uClibc.so.0"
+#define UCLIBC_DYNAMIC_LINKER64 "/lib/ld64-uClibc.so.0"
+#define LINUX_DYNAMIC_LINKER \
+  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER)
+#define LINUX_DYNAMIC_LINKER32 \
+  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER32, UCLIBC_DYNAMIC_LINKER32)
+#define LINUX_DYNAMIC_LINKER64 \
+  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER64, UCLIBC_DYNAMIC_LINKER64)
+
+#define GLIBC_DYNAMIC_LINKER32 "/lib/ld-linux.so.2"
+#define GLIBC_DYNAMIC_LINKER64 "/lib64/ld-linux-x86-64.so.2"
+
+/* Determine whether the entire c99 runtime
+   is present in the runtime library.  */
+#define TARGET_C99_FUNCTIONS (OPTION_GLIBC)
+
+/* Whether we have sincos that follows the GNU extension.  */
+#define TARGET_HAS_SINCOS (OPTION_GLIBC)
+
+#define TARGET_POSIX_IO
+
+#if TARGET_64BIT_DEFAULT
+#define SPEC_32 "m32"
+#define SPEC_64 "!m32"
+#else
+#define SPEC_32 "!m64"
+#define SPEC_64 "m64"
+#endif
+
+#undef	LINK_SPEC
+#define LINK_SPEC "%{" SPEC_64 ":-m elf64_nacl} %{" SPEC_32 ":-m elf_nacl} \
+  %{shared:-shared} \
+  %{!shared: \
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      %{" SPEC_32 ":%{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER32 "}} \
+      %{" SPEC_64 ":%{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER64 "}}} \
+    %{static:-static}}"
+
+#if TARGET_64BIT_DEFAULT
+#define MULTILIB_DEFAULTS { "m64" }
+#else
+#define MULTILIB_DEFAULTS { "m32" }
+#endif
+
+#undef NEED_INDICATE_EXEC_STACK
+#define NEED_INDICATE_EXEC_STACK 1
+
+#define MD_UNWIND_SUPPORT "config/i386/linux-unwind.h"
+
+/* This macro may be overridden in i386/k*bsd-gnu.h.  */
+#define REG_NAME(reg) reg
+
+#ifdef TARGET_LIBC_PROVIDES_SSP
+/* i386 glibc provides __stack_chk_guard in %gs:0x14,
+   x86_64 glibc provides it in %fs:0x28.  */
+#define TARGET_THREAD_SSP_OFFSET	(TARGET_64BIT ? 0x28 : 0x14)
+#endif
 
 /*
  * Because of NaCl's use of segment registers, negative offsets from gs: will
@@ -70,6 +193,19 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_TLS_DIRECT_SEG_REFS_DEFAULT
 #define TARGET_TLS_DIRECT_SEG_REFS_DEFAULT 0
 
+/* TODO(pasko): eliminate the need to define linux-specific macros. Currently
+ * Chromium build/build_config.h prevents us from eliminating these defines by
+ * not recognizing __native_client__ as a platform. */
+#define LINUX_TARGET_OS_CPP_BUILTINS()				\
+    do {							\
+	builtin_define ("__gnu_linux__");			\
+	builtin_define_std ("linux");				\
+	builtin_define_std ("unix");				\
+	builtin_assert ("system=linux");			\
+	builtin_assert ("system=unix");				\
+	builtin_assert ("system=posix");			\
+    } while (0)
+
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()			\
   do							\
@@ -79,7 +215,7 @@ Boston, MA 02111-1307, USA.  */
   }							\
   while (0)
 
-/* NaCl uses are using ILP32 model even on x86-84 */
+/* NaCl uses are using ILP32 model even on x86-84. */
 #undef LONG_TYPE_SIZE
 #define LONG_TYPE_SIZE 32
 #define POINTER_SIZE 32

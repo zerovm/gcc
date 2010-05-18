@@ -1,0 +1,10 @@
+MULTILIB_OPTIONS = m64/m32
+MULTILIB_DIRNAMES = 64 32 
+MULTILIB_OSDIRNAMES = ../lib64 ../lib32
+
+LIBGCC = stmp-multilib
+INSTALL_LIBGCC = install-multilib
+
+EXTRA_MULTILIB_PARTS=crtbegin.o crtend.o crtbeginS.o crtendS.o \
+		     crtbeginT.o crtprec32.o crtprec64.o crtprec80.o \
+		     crtfastmath.o
