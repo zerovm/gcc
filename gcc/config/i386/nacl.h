@@ -233,6 +233,11 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_SUBTARGET64_DEFAULT
 #define TARGET_SUBTARGET64_DEFAULT 0
 
+/* Configure script incorrectly detects this GAS capability on x86-64 and hence
+ * forces JUMP_TABLES_IN_TEXT_SECTION which cannot validate in NaCl. */
+#undef HAVE_AS_GOTOFF_IN_DATA
+#define HAVE_AS_GOTOFF_IN_DATA 1
+
 /* NaCl reserves R15 and makes RBP special in x86-64 mode */
 #undef FIXED_REGISTERS
 #define FIXED_REGISTERS						\
