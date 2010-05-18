@@ -19102,7 +19102,12 @@ ix86_expand_call (rtx retval, rtx fnaddr, rtx callarg1,
 	   ? !sibcall_insn_operand (XEXP (fnaddr, 0), Pmode)
 	   : !call_insn_operand (XEXP (fnaddr, 0), Pmode))
     {
-      fnaddr = copy_to_mode_reg (Pmode, XEXP (fnaddr, 0));
+      fnaddr = copy_to_mode_reg (ptr_mode, XEXP (fnaddr, 0));
+      if (Pmode != ptr_mode)
+	{
+	  fnaddr = gen_lowpart (Pmode, fnaddr);
+	  fnaddr = force_reg(Pmode, fnaddr);
+	}
       fnaddr = gen_rtx_MEM (QImode, fnaddr);
     }
 
