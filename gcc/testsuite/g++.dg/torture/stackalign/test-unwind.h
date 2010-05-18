@@ -1,7 +1,10 @@
 #include "check.h"
 
-
+#ifdef __x86_64__
+#define ASMNAME(cname)  ASMNAME2 (__USER_LABEL_PREFIX__, cname "(%rip)")
+#else
 #define ASMNAME(cname)  ASMNAME2 (__USER_LABEL_PREFIX__, cname)
+#endif
 #define ASMNAME2(prefix, cname) STRING (prefix) cname
 #define STRING(x)    #x
 
@@ -58,6 +61,7 @@ main()
 	// Init registers to correct value.
         // Use following template so that RA will save/restore callee
 	// save registers in prologue/epilogue
+#ifndef __x86_64__
 	__asm__  __volatile__ (
 	"movl %1, %0"
 	: "=D" (dummy)
@@ -68,6 +72,7 @@ main()
 	: "=S" (dummy)
 	: "i" (INIT_ESI)
 	);
+#endif
 	__asm__  __volatile__ (
 	"movl %1, %0"
 	: "=b" (dummy)
@@ -86,13 +91,16 @@ main()
 
 	// Get DI/SI/BX register value after exception caught
 	__asm__ __volatile__ (
+#ifndef __x86_64__
 	"movl %edi," ASMNAME("g_edi")"\n\t"
 	"movl %esi," ASMNAME("g_esi")"\n\t"
+#endif
 	"movl %ebx," ASMNAME("g_ebx")"\n\t"
 	"movl %ebp," ASMNAME("g_ebp")"\n\t"
 	"movl %esp," ASMNAME("g_esp")"\n\t"
 	);
 
+#ifndef __x86_64__
 	// Check if DI/SI/BX register value are the same as before calling
         // foo.
 	if (g_edi != INIT_EDI)
@@ -109,6 +117,7 @@ main()
 		printf("esi=%d, correct value:%d\n", g_esi, INIT_ESI);
 #endif
 	}
+#endif
 	if (g_ebx != INIT_EBX)
 	{
 		n_error++;
