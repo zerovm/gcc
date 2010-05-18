@@ -5695,6 +5695,9 @@ decl_default_tls_model (const_tree decl)
     kind = TLS_MODEL_GLOBAL_DYNAMIC;
   if (kind < flag_tls_default)
     kind = flag_tls_default;
+  if (TARGET_64BIT && flag_control_integrity)
+    /* NaCl currently supports a hybrid TLS model: __tls_get_addr(TPOFF) */
+    kind = TLS_MODEL_LOCAL_EXEC;
 
   return kind;
 }

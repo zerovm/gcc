@@ -3183,8 +3183,9 @@ expand_builtin_strlen (tree exp, rtx target,
       if (! (result != 0
 	     && REG_P (result)
 	     && GET_MODE (result) == insn_mode
+	     && insn_mode == Pmode
 	     && REGNO (result) >= FIRST_PSEUDO_REGISTER))
-	result = gen_reg_rtx (insn_mode);
+	result = gen_reg_rtx (Pmode);
 
       /* Make a place to hold the source address.  We will not expand
 	 the actual source until we are sure that the expansion will
@@ -3211,7 +3212,7 @@ expand_builtin_strlen (tree exp, rtx target,
       start_sequence ();
       pat = expand_expr (src, src_reg, ptr_mode, EXPAND_NORMAL);
       if (pat != src_reg)
-	emit_move_insn (src_reg, pat);
+	convert_move(src_reg, pat, 0);
       pat = get_insns ();
       end_sequence ();
 

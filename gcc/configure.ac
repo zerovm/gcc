@@ -605,7 +605,7 @@ Valid choices are 'yes', 'bid', 'dpd', and 'no'.]) ;;
 ],
 [
   case $target in
-    powerpc*-*-linux* | i?86*-*-linux* | x86_64*-*-linux*)
+    powerpc*-*-linux* | i?86*-*-linux* | x86_64*-*-linux* | i?86*-*-nacl*)
       enable_decimal_float=yes
       ;;
     *)
@@ -1353,7 +1353,7 @@ case ${enable_threads} in
     # default
     target_thread_file='single'
     ;;
-  aix | dce | gnat | irix | posix | posix95 | rtems | \
+  aix | dce | gnat | irix | nacl | posix | posix95 | rtems | \
   single | solaris | vxworks | win32 | mipssde)
     target_thread_file=${enable_threads}
     ;;
@@ -1928,6 +1928,7 @@ if test "$gcc_cv_ld" = ../ld/ld-new$build_exeext; then
 	in_tree_ld_is_elf=no
 	if (grep 'EMUL = .*elf' ../ld/Makefile \
 	    || grep 'EMUL = .*linux' ../ld/Makefile \
+	    || grep 'EMUL = .*nacl' ../ld/Makefile \
 	    || grep 'EMUL = .*lynx' ../ld/Makefile) > /dev/null; then
 	  in_tree_ld_is_elf=yes
 	fi
@@ -2517,7 +2518,7 @@ foo:	.long	25
 	tls_first_major=2
 	tls_first_minor=17
 	;;
-  i[34567]86-*-*)
+  i[34567]86*-*-*)
     conftest_s='
 	.section ".tdata","awT",@progbits
 foo:	.long	25
@@ -2951,7 +2952,7 @@ foo:
     ;;
 
 changequote(,)dnl
-  i[34567]86-*-* | x86_64-*-*)
+  i[34567]86*-*-* | x86_64-*-*)
 changequote([,])dnl
     case $target_os in
       cygwin* | pe | mingw32*)

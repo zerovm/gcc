@@ -4321,7 +4321,13 @@ reload_as_needed (int live_known)
 				 are met after the replacement.  */
 			      extract_insn (p);
 			      if (n)
-				n = constrain_operands (1);
+				{
+				  if (insn_is_nacl_lea(p))
+				    NACL_LEA_MATCH_ADDRESS_OPERAND++;
+				  n = constrain_operands (1);
+				  if (insn_is_nacl_lea(p))
+				    NACL_LEA_MATCH_ADDRESS_OPERAND--;
+				}
 			      else
 				break;
 
@@ -5213,7 +5219,11 @@ gen_reload_chain_without_interm_reg_p (int r1, int r2)
 	  /* We want constrain operands to treat this insn strictly in
 	     its validity determination, i.e., the way it would after
 	     reload has completed.  */
+	  if (insn_is_nacl_lea(insn))
+	    NACL_LEA_MATCH_ADDRESS_OPERAND++;
 	  result = constrain_operands (1);
+	  if (insn_is_nacl_lea(insn))
+	    NACL_LEA_MATCH_ADDRESS_OPERAND--;
 	}
       
       delete_insns_since (last);
@@ -6966,8 +6976,12 @@ emit_input_reload_insns (struct insn_chain *chain, struct reload *rl,
 
 	  /* Verify that resulting insn is valid.  */
 	  extract_insn (temp);
+	  if (insn_is_nacl_lea(insn))
+	    NACL_LEA_MATCH_ADDRESS_OPERAND++;
 	  if (constrain_operands (1))
 	    {
+	      if (insn_is_nacl_lea(insn))
+		NACL_LEA_MATCH_ADDRESS_OPERAND--;
 	      /* If the previous insn is an output reload, the source is
 		 a reload register, and its spill_reg_store entry will
 		 contain the previous destination.  This is now
@@ -6994,6 +7008,8 @@ emit_input_reload_insns (struct insn_chain *chain, struct reload *rl,
 	    }
 	  else
 	    {
+	      if (insn_is_nacl_lea(insn))
+		NACL_LEA_MATCH_ADDRESS_OPERAND--;
 	      SET_DEST (PATTERN (temp)) = old;
 	    }
 	}
@@ -8109,8 +8125,16 @@ emit_insn_if_valid_for_reload (rtx insn)
       /* We want constrain operands to treat this insn strictly in its
 	 validity determination, i.e., the way it would after reload has
 	 completed.  */
+      if (insn_is_nacl_lea(insn))
+	NACL_LEA_MATCH_ADDRESS_OPERAND++;
       if (constrain_operands (1))
-	return insn;
+	{
+	  if (insn_is_nacl_lea(insn))
+	    NACL_LEA_MATCH_ADDRESS_OPERAND--;
+	  return insn;
+	}
+      if (insn_is_nacl_lea(insn))
+	NACL_LEA_MATCH_ADDRESS_OPERAND--;
     }
 
   delete_insns_since (last);
@@ -8748,8 +8772,12 @@ inc_for_reload (rtx reloadreg, rtx in, rtx value, int inc_amount)
       if (code >= 0)
 	{
 	  extract_insn (add_insn);
+	  if (insn_is_nacl_lea(add_insn))
+	    NACL_LEA_MATCH_ADDRESS_OPERAND++;
 	  if (constrain_operands (1))
 	    {
+	      if (insn_is_nacl_lea(add_insn))
+		NACL_LEA_MATCH_ADDRESS_OPERAND--;
 	      /* If this is a pre-increment and we have incremented the value
 		 where it lives, copy the incremented value to RELOADREG to
 		 be used as an address.  */
@@ -8759,6 +8787,8 @@ inc_for_reload (rtx reloadreg, rtx in, rtx value, int inc_amount)
 
 	      return add_insn;
 	    }
+	  if (insn_is_nacl_lea(add_insn))
+	    NACL_LEA_MATCH_ADDRESS_OPERAND--;
 	}
       delete_insns_since (last);
     }

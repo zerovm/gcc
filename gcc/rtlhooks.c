@@ -51,6 +51,11 @@ gen_lowpart_general (enum machine_mode mode, rtx x)
       gcc_assert (result != 0);
       return result;
     }
+  /* Symbol reference can be just recreated with proper mode */
+  else if (GET_CODE (x) == SYMBOL_REF)
+    {
+      return gen_rtx_SYMBOL_REF(mode, XSTR (x, 0));
+    }
   else
     {
       int offset = 0;

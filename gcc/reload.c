@@ -863,7 +863,11 @@ can_reload_into (rtx in, int regno, enum machine_mode mode)
   if (recog_memoized (test_insn) >= 0)
     {
       extract_insn (test_insn);
+      if (insn_is_nacl_lea(test_insn))
+	NACL_LEA_MATCH_ADDRESS_OPERAND++;
       r = constrain_operands (1);
+      if (insn_is_nacl_lea(test_insn))
+	NACL_LEA_MATCH_ADDRESS_OPERAND--;
     }
   recog_data = save_recog_data;
   return r;
@@ -4692,6 +4696,9 @@ find_reloads_toplev (rtx x, int opnum, enum reload_type type,
 	  && reg_equiv_constant[regno] != 0)
 	{
 	  tem =
+	    GET_MODE (x) == GET_MODE(reg_equiv_constant[regno]) ?
+		reg_equiv_constant[regno]
+	    :
 	    simplify_gen_subreg (GET_MODE (x), reg_equiv_constant[regno],
 				 GET_MODE (SUBREG_REG (x)), SUBREG_BYTE (x));
 	  gcc_assert (tem);

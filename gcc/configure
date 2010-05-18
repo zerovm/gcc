@@ -7835,7 +7835,7 @@ Valid choices are 'yes', 'bid', 'dpd', and 'no'." >&2;}
 else
 
   case $target in
-    powerpc*-*-linux* | i?86*-*-linux* | x86_64*-*-linux*)
+    powerpc*-*-linux* | i?86*-*-linux* | x86_64*-*-linux* | i?86*-*-nacl*)
       enable_decimal_float=yes
       ;;
     *)
@@ -11701,7 +11701,7 @@ fi;
                 if test "X$additional_includedir" = "X/usr/local/include"; then
                   if test -n "$GCC"; then
                     case $host_os in
-                      linux*) haveit=yes;;
+                      linux* | nacl*) haveit=yes;;
                     esac
                   fi
                 fi
@@ -11745,7 +11745,7 @@ fi;
                       if test "X$additional_libdir" = "X/usr/local/lib"; then
                         if test -n "$GCC"; then
                           case $host_os in
-                            linux*) haveit=yes;;
+                            linux* | nacl*) haveit=yes;;
                           esac
                         fi
                       fi
@@ -13333,7 +13333,7 @@ case ${enable_threads} in
     # default
     target_thread_file='single'
     ;;
-  aix | dce | gnat | irix | posix | posix95 | rtems | \
+  aix | dce | gnat | irix | nacl | posix | posix95 | rtems | \
   single | solaris | vxworks | win32 | mipssde)
     target_thread_file=${enable_threads}
     ;;
@@ -20817,6 +20817,7 @@ echo "${ECHO_T}newly built ld" >&6
 	in_tree_ld_is_elf=no
 	if (grep 'EMUL = .*elf' ../ld/Makefile \
 	    || grep 'EMUL = .*linux' ../ld/Makefile \
+	    || grep 'EMUL = .*nacl' ../ld/Makefile \
 	    || grep 'EMUL = .*lynx' ../ld/Makefile) > /dev/null; then
 	  in_tree_ld_is_elf=yes
 	fi

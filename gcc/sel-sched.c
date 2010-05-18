@@ -1027,9 +1027,13 @@ get_reg_class (rtx insn)
   int alt, i, n_ops;
 
   extract_insn (insn);
+  if (insn_is_nacl_lea(insn))
+    NACL_LEA_MATCH_ADDRESS_OPERAND++;
   if (! constrain_operands (1))
     fatal_insn_not_found (insn);
   preprocess_constraints ();
+  if (insn_is_nacl_lea(insn))
+    NACL_LEA_MATCH_ADDRESS_OPERAND--;
   alt = which_alternative;
   n_ops = recog_data.n_operands;
 

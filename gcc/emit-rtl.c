@@ -852,6 +852,10 @@ byte_lowpart_offset (enum machine_mode outer_mode,
     return -subreg_lowpart_offset (inner_mode, outer_mode);
 }
 
+/* NaCl require temporary variables in places where usually it's
+   not allowed */
+int nacl_special_commands = 0;
+
 /* Generate a REG rtx for a new pseudo register of mode MODE.
    This pseudo is assigned the next sequential register number.  */
 
@@ -861,7 +865,7 @@ gen_reg_rtx (enum machine_mode mode)
   rtx val;
   unsigned int align = GET_MODE_ALIGNMENT (mode);
 
-  gcc_assert (can_create_pseudo_p ());
+  gcc_assert (can_create_pseudo_p () || nacl_special_commands);
 
   /* If a virtual register with bigger mode alignment is generated,
      increase stack alignment estimation because it might be spilled

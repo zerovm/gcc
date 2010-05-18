@@ -943,9 +943,12 @@ decode_options (unsigned int argc, const char **argv)
   /* Just -O1/-O0 optimizations.  */
   opt1_max = (optimize <= 1);
   align_loops = opt1_max;
+  if (!flag_control_integrity)
+  {
   align_jumps = opt1_max;
   align_labels = opt1_max;
   align_functions = opt1_max;
+  }
 
   if (optimize_size)
     {
@@ -1082,6 +1085,21 @@ decode_options (unsigned int argc, const char **argv)
       inform (input_location,
 	      "-fira-algorithm=CB does not work on this architecture");
       flag_ira_algorithm = IRA_ALGORITHM_PRIORITY;
+    }
+
+  /* NativeClient: set the alignment based on command line flags. */
+  if (flag_nacl_align_pow2 != NACL_ALIGN_POW2)
+    {
+      align_jumps = (1 << flag_nacl_align_pow2);
+      align_labels = (1 << flag_nacl_align_pow2);
+      align_functions = (1 << flag_nacl_align_pow2);
+    }
+
+  if (flag_nacl_library_mode)
+    {
+      align_jumps = 32;
+      align_labels = 32;
+      align_functions = 32;
     }
 
   /* Save the current optimization options if this is the first call.  */

@@ -30,6 +30,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm_p.h"
 #include "obstack.h"
 #include "insn-config.h"
+#include "insn-attr.h"
 #include "flags.h"
 #include "function.h"
 #include "expr.h"
@@ -392,8 +393,12 @@ reload_cse_simplify_operands (rtx insn, rtx testreg)
     return 0;
 
   /* Figure out which alternative currently matches.  */
+  if (insn_is_nacl_lea(insn))
+    NACL_LEA_MATCH_ADDRESS_OPERAND++;
   if (! constrain_operands (1))
     fatal_insn_not_found (insn);
+  if (insn_is_nacl_lea(insn))
+    NACL_LEA_MATCH_ADDRESS_OPERAND--;
 
   alternative_reject = XALLOCAVEC (int, recog_data.n_alternatives);
   alternative_nregs = XALLOCAVEC (int, recog_data.n_alternatives);
@@ -1610,4 +1615,3 @@ struct rtl_opt_pass pass_postreload_cse =
   TODO_dump_func                        /* todo_flags_finish */
  }
 };
-

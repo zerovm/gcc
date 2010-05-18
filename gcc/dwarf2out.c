@@ -1475,8 +1475,16 @@ dwarf2out_stack_adjust (rtx insn, bool after_p)
 	    insn = XVECEXP (insn, 0, 0);
 	  if (GET_CODE (insn) == SET)
 	    insn = SET_SRC (insn);
-	  gcc_assert (GET_CODE (insn) == CALL);
+	  if (GET_CODE (insn) == CALL) {
 	  dwarf2out_args_size ("", INTVAL (XEXP (insn, 1)));
+	}
+	  else if ((GET_CODE (insn) == UNSPEC) &&
+		   (XINT (insn, 1) == UNSPEC_NACLCALL)) {
+	    dwarf2out_args_size ("", INTVAL (XVECEXP (insn, 0, 1)));
+	  }
+	  else {
+	    internal_error ("Not recognized as a call or naclcall");
+	  }
 	}
       return;
     }

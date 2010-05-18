@@ -414,6 +414,9 @@ if test x$enable_libmudflap = x ; then
     *-*-freebsd*)
         # Enable libmudflap by default in FreeBSD.
 	;;
+    *-*-nacl*)
+        # Enable libmudflap by default in NativeClient.
+        ;;
     *)
         # Disable it by default everywhere else.
 	noconfigdirs="$noconfigdirs target-libmudflap"
@@ -432,6 +435,8 @@ if test x$enable_libgomp = x ; then
     *-*-solaris2* | *-*-sysv4* | *-*-irix6* | *-*-osf* | *-*-hpux11*)
 	;;
     *-*-darwin* | *-*-aix*)
+	;;
+    *-*-nacl*)
 	;;
     *)
 	noconfigdirs="$noconfigdirs target-libgomp"
@@ -923,7 +928,7 @@ case "${target}" in
   ip2k-*-*)
     noconfigdirs="$noconfigdirs target-libiberty target-libstdc++-v3 ${libgcj}"
     ;;
-  *-*-linux* | *-*-gnu* | *-*-k*bsd*-gnu | *-*-kopensolaris*-gnu)
+  *-*-linux* | *-*-gnu* | *-*-k*bsd*-gnu | *-*-kopensolaris*-gnu | *-*-nacl*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
   *-*-lynxos*)

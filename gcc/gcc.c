@@ -3783,10 +3783,12 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	    fatal ("argument to '-l' is missing");
 
 	  n_infiles++;
+	  n_switches++;
 	  i++;
 	}
       else if (strncmp (argv[i], "-l", 2) == 0)
-	n_infiles++;
+	n_infiles++,
+	n_switches++;
       else if (strcmp (argv[i], "-save-temps") == 0)
 	{
 	  save_temps_flag = 1;
@@ -4203,12 +4205,20 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	{ /* POSIX allows separation of -l and the lib arg;
 	     canonicalize by concatenating -l with its arg */
 	  infiles[n_infiles].language = "*";
-	  infiles[n_infiles++].name = concat ("-l", argv[++i], NULL);
+	  infiles[n_infiles].name = concat ("-l", argv[++i], NULL);
+	  switches[n_switches].part1 = infiles[n_infiles++].name + 1;
+	  switches[n_switches].args = 0;
+	  switches[n_switches].live_cond = 1;
+	  switches[n_switches++].validated = 1;
 	}
       else if (strncmp (argv[i], "-l", 2) == 0)
 	{
 	  infiles[n_infiles].language = "*";
-	  infiles[n_infiles++].name = argv[i];
+	  infiles[n_infiles].name = argv[i];
+	  switches[n_switches].part1 = infiles[n_infiles++].name + 1;
+	  switches[n_switches].args = 0;
+	  switches[n_switches].live_cond = 1;
+	  switches[n_switches++].validated = 1;
 	}
       else if (strcmp (argv[i], "-wrapper") == 0)
         i++;
@@ -6769,7 +6779,10 @@ main (int argc, char **argv)
 
       /* Use the same thing in %o, unless cp->spec says otherwise.  */
 
-      outfiles[i] = input_filename;
+      if (strcmp(input_filename, "-lnosys") == 0)
+	outfiles[i] = NULL;
+      else
+	outfiles[i] = input_filename;
 
       /* Figure out which compiler from the file's suffix.  */
 

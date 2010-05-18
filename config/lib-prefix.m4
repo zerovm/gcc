@@ -71,7 +71,7 @@ AC_DEFUN([AC_LIB_PREFIX],
         if test "X$additional_includedir" = "X/usr/local/include"; then
           if test -n "$GCC"; then
             case $host_os in
-              linux*) haveit=yes;;
+              linux* | nacl*) haveit=yes;;
             esac
           fi
         fi
@@ -102,7 +102,7 @@ AC_DEFUN([AC_LIB_PREFIX],
         if test "X$additional_libdir" = "X/usr/local/lib"; then
           if test -n "$GCC"; then
             case $host_os in
-              linux*) haveit=yes;;
+              linux* | nacl*) haveit=yes;;
             esac
           fi
         fi

@@ -1755,7 +1755,8 @@ call_from_call_insn (rtx insn)
   gcc_assert (CALL_P (insn));
   x = PATTERN (insn);
 
-  while (GET_CODE (x) != CALL)
+  while (GET_CODE (x) != CALL &&
+         !(GET_CODE (x) == UNSPEC && XINT (x, 1) == UNSPEC_NACLCALL))
     {
       switch (GET_CODE (x))
 	{
@@ -2533,8 +2534,12 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
 	    print_rtx_head = "";
 	  }
 
+	if (insn_is_nacl_lea(insn))
+	  NACL_LEA_MATCH_ADDRESS_OPERAND++;
 	if (! constrain_operands_cached (1))
 	  fatal_insn_not_found (insn);
+	if (insn_is_nacl_lea(insn))
+	 NACL_LEA_MATCH_ADDRESS_OPERAND--;
 
 	/* Some target machines need to prescan each insn before
 	   it is output.  */
@@ -2635,7 +2640,11 @@ final_scan_insn (rtx insn, FILE *file, int optimize ATTRIBUTE_UNUSED,
 	  }
 
 	/* Output assembler code from the template.  */
+        if (insn_is_nacl_lea(insn))
+          NACL_LEA_MATCH_ADDRESS_OPERAND++;
 	output_asm_insn (templ, recog_data.operand);
+	if (insn_is_nacl_lea(insn))
+          NACL_LEA_MATCH_ADDRESS_OPERAND--;
 
 	/* If necessary, report the effect that the instruction has on
 	   the unwind info.   We've already done this for delay slots

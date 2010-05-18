@@ -1069,6 +1069,9 @@ force_nonfallthru_and_redirect (edge e, basic_block target)
     }
   else
     {
+      if ((e->flags & EDGE_FALLTHRU) == 0) {
+        printf("Edge flags were incorrect %x\n", e->flags);
+      }
       gcc_assert (e->flags & EDGE_FALLTHRU);
       if (e->src == ENTRY_BLOCK_PTR)
 	{

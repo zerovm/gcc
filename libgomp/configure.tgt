@@ -48,7 +48,7 @@ if test $enable_linux_futex = yes; then
 	;;
 
     # Note that bare i386 is not included here.  We need cmpxchg.
-    i[456]86-*-linux*)
+    i[456]86*-*-linux* | i[456]86*-*-nacl*)
 	config_path="linux/x86 linux posix"
 	case " ${CC} ${CFLAGS} " in
 	  *" -m64 "*)

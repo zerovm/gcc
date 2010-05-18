@@ -808,14 +808,16 @@
 
 ;; Return true if op if a valid address, and does not contain
 ;; a segment override.
-(define_special_predicate "no_seg_address_operand"
-  (match_operand 0 "address_operand")
+(define_special_predicate "lea_address_operand"
+  (match_operand 0 "lea_match_address_operand")
 {
   struct ix86_address parts;
   int ok;
 
+  NACL_LEA_MATCH_ADDRESS_OPERAND++;
   ok = ix86_decompose_address (op, &parts);
   gcc_assert (ok);
+  NACL_LEA_MATCH_ADDRESS_OPERAND--;
   return parts.seg == SEG_DEFAULT;
 })
 

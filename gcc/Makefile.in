@@ -1076,6 +1076,7 @@ OBJS-common = \
 	coverage.o \
 	cse.o \
 	cselib.o \
+	ctrl-intg.o \
 	dbxout.o \
 	dbgcnt.o \
 	dce.o \
@@ -2662,6 +2663,8 @@ cse.o : cse.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) $(REGS_H) \
    output.h $(FUNCTION_H) $(BASIC_BLOCK_H) $(GGC_H) $(TM_P_H) $(TIMEVAR_H) \
    except.h $(TARGET_H) $(PARAMS_H) rtlhooks-def.h tree-pass.h $(REAL_H) \
    $(DF_H) $(DBGCNT_H)
+ctrl-intg.o : ctrl-intg.c $(CONFIG_H) $(SYSTEM_H) $(BCONFIG_H) \
+   $(TREE_H) $(RTL_H) $(TM_H) $(EXPR_H) $(FLAGS_H) $(BASIC_BLOCK_H)
 dce.o : dce.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) \
    $(TREE_H) $(REGS_H) hard-reg-set.h $(FLAGS_H) $(DF_H) cselib.h \
    $(DBGCNT_H) dce.h $(TIMEVAR_H) tree-pass.h $(DBGCNT_H) $(TM_P_H)

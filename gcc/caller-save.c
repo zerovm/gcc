@@ -161,9 +161,17 @@ reg_save_code (int reg, enum machine_mode mode)
   if (ok)
     {
       extract_insn (saveinsn);
+      if (insn_is_nacl_lea(saveinsn))
+	NACL_LEA_MATCH_ADDRESS_OPERAND++;
       ok = constrain_operands (1);
+      if (insn_is_nacl_lea(saveinsn))
+	NACL_LEA_MATCH_ADDRESS_OPERAND--;
       extract_insn (restinsn);
+      if (insn_is_nacl_lea(restinsn))
+	NACL_LEA_MATCH_ADDRESS_OPERAND++;
       ok &= constrain_operands (1);
+      if (insn_is_nacl_lea(restinsn))
+	NACL_LEA_MATCH_ADDRESS_OPERAND--;
     }
 
   if (! ok)

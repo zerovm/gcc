@@ -332,8 +332,17 @@ insn_invalid_p (rtx insn)
     {
       extract_insn (insn);
 
+      /* Make sure we allow as much as possble here.  We don't need to check
+         the sandboxing here, only validity of the instruction.  */
+      NACL_LEA_MATCH_ADDRESS_OPERAND++;
+
       if (! constrain_operands (1))
-	return 1;
+	{
+	  NACL_LEA_MATCH_ADDRESS_OPERAND--;
+	  return 1;
+	}
+
+      NACL_LEA_MATCH_ADDRESS_OPERAND--;
     }
 
   INSN_CODE (insn) = icode;
@@ -1961,10 +1970,25 @@ extract_insn_cached (rtx insn)
 void
 extract_constrain_insn_cached (rtx insn)
 {
+  int lea, change_lea;
+  /* get_attr_type can call extract_constrain_insn_cached - don't call it if in
+     lea mode already */
+  if (!TARGET_64BIT || NACL_LEA_MATCH_ADDRESS_OPERAND)
+    {
+       lea = 1;
+       change_lea = 0;
+    }
+  else
+    {
+      lea = insn_is_nacl_lea(insn);
+      change_lea = 1;
+    }
+  if (lea && change_lea) NACL_LEA_MATCH_ADDRESS_OPERAND++;
   extract_insn_cached (insn);
   if (which_alternative == -1
       && !constrain_operands (reload_completed))
     fatal_insn_not_found (insn);
+  if (lea && change_lea) NACL_LEA_MATCH_ADDRESS_OPERAND--;
 }
 
 /* Do cached constrain_operands and complain about failures.  */
@@ -2085,6 +2109,17 @@ extract_insn (rtx insn)
 
   recog_data.insn = NULL;
   which_alternative = -1;
+}
+
+enum attr_type
+get_attr_type (rtx insn ATTRIBUTE_UNUSED)
+{
+  enum attr_type result;
+  extern int NACL_LEA_MATCH_ADDRESS_OPERAND;
+  NACL_LEA_MATCH_ADDRESS_OPERAND++;
+  result = get_attr_type_real(insn);
+  NACL_LEA_MATCH_ADDRESS_OPERAND--;
+  return result;
 }
 
 /* After calling extract_insn, you can use this function to extract some
@@ -3626,5 +3661,3 @@ struct rtl_opt_pass pass_split_for_shorten_branches =
   TODO_dump_func | TODO_verify_rtl_sharing /* todo_flags_finish */
  }
 };
-
-

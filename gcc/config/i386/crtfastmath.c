@@ -27,7 +27,12 @@
 #ifndef __x86_64__
 /* All 64-bit targets have SSE and DAZ;
    only check them explicitly for 32-bit ones. */
+#ifndef __native_client__
+  /* Native Client does not allow several instructions used here, notably
+     setting model specific registers.  We're going to want to revisit this
+     as a possible syscall */
 #include "cpuid.h"
+#endif
 #endif
 
 static void __attribute__((constructor))
@@ -40,6 +45,10 @@ __attribute__ ((force_align_arg_pointer))
 set_fast_math (void)
 {
 #ifndef __x86_64__
+#ifndef __native_client__
+  /* Native Client does not allow several instructions used here, notably
+     setting model specific registers.  We're going to want to revisit this
+     as a possible syscall */
   unsigned int eax, ebx, ecx, edx;
 
   if (!__get_cpuid (1, &eax, &ebx, &ecx, &edx))
@@ -81,6 +90,7 @@ set_fast_math (void)
 
       __builtin_ia32_ldmxcsr (mxcsr);
     }
+#endif
 #else
   unsigned int mxcsr = __builtin_ia32_stmxcsr ();
   mxcsr |= MXCSR_DAZ | MXCSR_FTZ;

@@ -5199,7 +5199,7 @@ irix5* | irix6* | nonstopux*)
   ;;
 
 # This must be Linux ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu)
+linux* | k*bsd*-gnu | kopensolaris*-gnu | nacl*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 

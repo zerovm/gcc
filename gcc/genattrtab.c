@@ -3650,7 +3650,10 @@ write_attr_get (struct attr_desc *attr)
   if (attr->name[0] == '*')
     printf ("%s (rtx insn ATTRIBUTE_UNUSED)\n", &attr->name[1]);
   else if (attr->is_const == 0)
+    if (strcmp(attr->name, "type"))
     printf ("get_attr_%s (rtx insn ATTRIBUTE_UNUSED)\n", attr->name);
+  else
+      printf ("get_attr_type_real (rtx insn ATTRIBUTE_UNUSED)\n");
   else
     {
       printf ("get_attr_%s (void)\n", attr->name);

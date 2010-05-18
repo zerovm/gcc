@@ -1355,6 +1355,7 @@ struct std_pred_table
 static const struct std_pred_table std_preds[] = {
   {"general_operand", false, true, {SUBREG, REG, MEM}},
   {"address_operand", true, true, {SUBREG, REG, MEM, PLUS, MINUS, MULT}},
+  {"lea_match_address_operand", true, true, {SUBREG, REG, MEM, PLUS, MINUS, MULT}},
   {"register_operand", false, false, {SUBREG, REG}},
   {"pmode_register_operand", true, false, {SUBREG, REG}},
   {"scratch_operand", false, false, {SCRATCH, REG}},

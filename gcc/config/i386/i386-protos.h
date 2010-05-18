@@ -253,7 +253,7 @@ extern rtx maybe_get_pool_constant (rtx);
 extern char internal_label_prefix[16];
 extern int internal_label_prefix_len;
 
-enum ix86_address_seg { SEG_DEFAULT, SEG_FS, SEG_GS };
+enum ix86_address_seg { SEG_DEFAULT, SEG_FS, SEG_GS, SEG_NACL };
 struct ix86_address
 {
   rtx base, index, disp;
@@ -261,6 +261,9 @@ struct ix86_address
   enum ix86_address_seg seg;
 };
 
+extern int NACL_LEA_MATCH_ADDRESS_OPERAND;
+extern int insn_is_nacl_lea(rtx insn);
+extern int lea_match_address_operand (rtx, enum machine_mode);
 extern int ix86_decompose_address (rtx, struct ix86_address *);
 extern int memory_address_length (rtx addr);
 extern void x86_output_aligned_bss (FILE *, tree, const char *,
