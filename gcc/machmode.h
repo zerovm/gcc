@@ -219,10 +219,14 @@ extern const unsigned char mode_nunits[NUM_MACHINE_MODES];
 /* Get the next wider natural mode (eg, QI -> HI -> SI -> DI -> TI).  */
 
 extern const unsigned char mode_wider[NUM_MACHINE_MODES];
+#ifndef GET_MODE_WIDER_MODE
 #define GET_MODE_WIDER_MODE(MODE) mode_wider[MODE]
+#endif
 
 extern const unsigned char mode_2xwider[NUM_MACHINE_MODES];
+#ifndef GET_MODE_2XWIDER_MODE
 #define GET_MODE_2XWIDER_MODE(MODE) mode_2xwider[MODE]
+#endif
 
 /* Return the mode for data of a given size SIZE and mode class CLASS.
    If LIMIT is nonzero, then don't use modes bigger than MAX_FIXED_MODE_SIZE.
