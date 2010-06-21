@@ -21,6 +21,8 @@ along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+#define TARGET_NACL (flag_control_integrity)
+
 /* These definitions modify those in i386elf.h. */
 
 #undef TARGET_VERSION
@@ -269,14 +271,14 @@ Boston, MA 02111-1307, USA.  */
      1,   1,    1,    1,    1,    1,    1,    1 }
 /* Leave is forbidden in NaCl mode */
 #undef TARGET_USE_LEAVE
-#define TARGET_USE_LEAVE	(ix86_tune_features[X86_TUNE_USE_LEAVE] && !flag_control_integrity)
+#define TARGET_USE_LEAVE	(ix86_tune_features[X86_TUNE_USE_LEAVE] && !TARGET_NACL)
 #undef TARGET_USE_BT
-#define TARGET_USE_BT		(ix86_tune_features[X86_TUNE_USE_BT] && !flag_control_integrity)
+#define TARGET_USE_BT		(ix86_tune_features[X86_TUNE_USE_BT] && !TARGET_NACL)
 
 #undef DBX_REGISTER_NUMBER
 #define DBX_REGISTER_NUMBER(n) \
   (TARGET_64BIT ? dbx64_register_map[n] : svr4_dbx_register_map[n])
 
 #define DWARF2_ADDR_SIZE \
-    (flag_control_integrity ? (TARGET_64BIT ? 8 : 4) : \
-                              (POINTER_SIZE / BITS_PER_UNIT))
+    (TARGET_NACL ? (TARGET_64BIT ? 8 : 4) : \
+                   (POINTER_SIZE / BITS_PER_UNIT))
