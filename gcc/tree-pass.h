@@ -389,8 +389,6 @@ extern struct gimple_opt_pass pass_rebuild_cgraph_edges;
 extern struct gimple_opt_pass pass_build_cgraph_edges;
 extern struct gimple_opt_pass pass_reset_cc_flags;
 
-extern struct rtl_opt_pass pass_control_integrity;
-
 /* IPA Passes */
 extern struct ipa_opt_pass pass_ipa_inline;
 extern struct ipa_opt_pass pass_ipa_cp;

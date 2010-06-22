@@ -19111,7 +19111,13 @@ ix86_expand_call (rtx retval, rtx fnaddr, rtx callarg1,
       fnaddr = gen_rtx_MEM (QImode, fnaddr);
     }
 
-  call = gen_rtx_CALL (VOIDmode, fnaddr, callarg1);
+  if (!TARGET_NACL
+      || (GET_CODE (fnaddr) == MEM
+          && constant_call_address_operand (XEXP (fnaddr, 0), Pmode)))
+    call = gen_rtx_CALL (VOIDmode, fnaddr, callarg1);
+  else
+    call = gen_rtx_UNSPEC (VOIDmode, gen_rtvec (2, fnaddr, callarg1),
+                           UNSPEC_NACLCALL);
   if (retval)
     call = gen_rtx_SET (VOIDmode, retval, call);
   if (pop)
