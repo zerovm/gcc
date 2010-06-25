@@ -1317,16 +1317,8 @@ setup_prohibited_mode_move_regs (void)
 	  if (INSN_CODE (move_insn) < 0)
 	    continue;
 	  extract_insn (move_insn);
-	  if (insn_is_nacl_lea(move_insn))
-	    NACL_LEA_MATCH_ADDRESS_OPERAND++;
 	  if (! constrain_operands (1))
-	    {
-	      if (insn_is_nacl_lea(move_insn))
-		NACL_LEA_MATCH_ADDRESS_OPERAND--;
-	      continue;
-	    }
-	  if (insn_is_nacl_lea(move_insn))
-	    NACL_LEA_MATCH_ADDRESS_OPERAND--;
+	    continue;
 	  CLEAR_HARD_REG_BIT (ira_prohibited_mode_move_regs[i], j);
 	}
     }

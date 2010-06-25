@@ -261,8 +261,6 @@ struct ix86_address
   enum ix86_address_seg seg;
 };
 
-extern int NACL_LEA_MATCH_ADDRESS_OPERAND;
-extern int insn_is_nacl_lea(rtx insn);
 extern int lea_match_address_operand (rtx, enum machine_mode);
 extern int ix86_decompose_address (rtx, struct ix86_address *);
 extern int memory_address_length (rtx addr);

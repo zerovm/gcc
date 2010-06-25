@@ -8960,7 +8960,6 @@ ix86_lea_decompose_address (rtx addr, struct ix86_address *out)
   return retval;
 }
 
-int NACL_LEA_MATCH_ADDRESS_OPERAND = 0;
 int
 lea_match_address_operand (rtx op, enum machine_mode mode)
 {
@@ -8978,51 +8977,6 @@ lea_match_address_operand (rtx op, enum machine_mode mode)
 #else
   return legitimate_address_parts_p (&parts, 0);
 #endif
-}
-
-/* Check if instruction is a LEA instruction.
-
-   We should prevent invocation of get_attr_type(insn) for some insns. Examples
-   are: USE, CLOBBER, instructions with asm_operands. get_attr_type() has a side
-   effect on the instruction itself or on recog_data.
-
-   This pattern of checking was borrowed from extract_insn() in recog.c and
-   should be refactored to improve code reuse.  */
-
-int
-insn_is_nacl_lea(rtx insn)
-{
-  rtx body = PATTERN(insn);
-
-  if (!TARGET_64BIT)
-    return 0;
-
-  switch (GET_CODE (body))
-    {
-    case USE:
-    case CLOBBER:
-    case ASM_INPUT:
-    case ADDR_VEC:
-    case ADDR_DIFF_VEC:
-    case ASM_OPERANDS:
-      return 0;
-
-    case SET:
-      if (GET_CODE (SET_SRC (body)) == ASM_OPERANDS)
-	return 0;
-      else
-	goto normal_insn;
-    case PARALLEL:
-      if ((GET_CODE (XVECEXP (body, 0, 0)) == SET
-	   && GET_CODE (SET_SRC (XVECEXP (body, 0, 0))) == ASM_OPERANDS)
-	  || GET_CODE (XVECEXP (body, 0, 0)) == ASM_OPERANDS)
-	return 0;
-      else
-	goto normal_insn;
-    default:
-    normal_insn:
-      return get_attr_type (insn) == TYPE_LEA;
-    }
 }
 
 static int

@@ -863,11 +863,7 @@ can_reload_into (rtx in, int regno, enum machine_mode mode)
   if (recog_memoized (test_insn) >= 0)
     {
       extract_insn (test_insn);
-      if (insn_is_nacl_lea(test_insn))
-	NACL_LEA_MATCH_ADDRESS_OPERAND++;
       r = constrain_operands (1);
-      if (insn_is_nacl_lea(test_insn))
-	NACL_LEA_MATCH_ADDRESS_OPERAND--;
     }
   recog_data = save_recog_data;
   return r;

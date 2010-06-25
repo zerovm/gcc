@@ -25,7 +25,6 @@
 #include "rtl.h"
 #include "tm_p.h"
 #include "insn-config.h"
-#include "insn-attr.h"
 #include "regs.h"
 #include "addresses.h"
 #include "hard-reg-set.h"
@@ -771,12 +770,8 @@ build_def_use (basic_block bb)
 
 	  icode = recog_memoized (insn);
 	  extract_insn (insn);
-	  if (insn_is_nacl_lea(insn))
-	    NACL_LEA_MATCH_ADDRESS_OPERAND++;
 	  if (! constrain_operands (1))
 	    fatal_insn_not_found (insn);
-	  if (insn_is_nacl_lea(insn))
-	    NACL_LEA_MATCH_ADDRESS_OPERAND--;
 	  preprocess_constraints ();
 	  alt = which_alternative;
 	  n_ops = recog_data.n_operands;
@@ -1604,14 +1599,9 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 
       set = single_set (insn);
       extract_insn (insn);
-      
-      if (insn_is_nacl_lea(insn))
-        NACL_LEA_MATCH_ADDRESS_OPERAND++;
       if (! constrain_operands (1))
 	fatal_insn_not_found (insn);
       preprocess_constraints ();
-      if (insn_is_nacl_lea(insn))
-        NACL_LEA_MATCH_ADDRESS_OPERAND--;
       alt = which_alternative;
       n_ops = recog_data.n_operands;
       is_asm = asm_noperands (PATTERN (insn)) >= 0;
