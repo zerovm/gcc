@@ -19282,13 +19282,17 @@ ix86_expand_call (rtx retval, rtx fnaddr, rtx callarg1,
       fnaddr = gen_rtx_MEM (QImode, fnaddr);
     }
 
-  if (!TARGET_NACL
-      || (GET_CODE (fnaddr) == MEM
-          && constant_call_address_operand (XEXP (fnaddr, 0), Pmode)))
-    call = gen_rtx_CALL (VOIDmode, fnaddr, callarg1);
-  else
-    call = gen_rtx_UNSPEC (VOIDmode, gen_rtvec (2, fnaddr, callarg1),
-                           UNSPEC_NACLCALL);
+  /* According to gcc internals manual, FNADDR should always be MEM.
+     At least the code above works only if FNADDR is something that has Pmode
+     expression as the first child.  */
+  if (TARGET_NACL && !constant_call_address_operand (XEXP (fnaddr, 0), Pmode))
+    {
+      fnaddr = gen_rtx_UNSPEC (Pmode, gen_rtvec (1, XEXP (fnaddr, 0)),
+                               UNSPEC_NACLCALL);
+      fnaddr = gen_rtx_MEM (QImode, fnaddr);
+    }
+    
+  call = gen_rtx_CALL (VOIDmode, fnaddr, callarg1);
   if (retval)
     call = gen_rtx_SET (VOIDmode, retval, call);
   if (pop)

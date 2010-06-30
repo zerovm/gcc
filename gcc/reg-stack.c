@@ -1866,24 +1866,9 @@ subst_stack_regs_pat (rtx insn, stack regstack, rtx pat)
 		compare_for_stack_reg (insn, regstack, pat_src);
 		break;
 
-              case UNSPEC_NACLCALL:
-	        {
-	          int count = hard_regno_nregs[REGNO (*dest)][GET_MODE (*dest)];
-	          while (--count >= 0)
-		    {
-		      regstack->reg[++regstack->top] = REGNO (*dest) + count;
-		      SET_HARD_REG_BIT (regstack->reg_set, 
-                                        REGNO (*dest) + count);
-		    }
-	        }
-	        replace_reg (dest, FIRST_STACK_REG);
-                break;
-
-              case UNSPEC_NACLJMP:
-                break;
-
-              case UNSPEC_NACLRET:
-                break;
+	      case UNSPEC_NACLJMP:
+	      case UNSPEC_NACLRET:
+		break;
 
 	      default:
 		gcc_unreachable ();

@@ -1755,8 +1755,7 @@ call_from_call_insn (rtx insn)
   gcc_assert (CALL_P (insn));
   x = PATTERN (insn);
 
-  while (GET_CODE (x) != CALL &&
-         !(GET_CODE (x) == UNSPEC && XINT (x, 1) == UNSPEC_NACLCALL))
+  while (GET_CODE (x) != CALL)
     {
       switch (GET_CODE (x))
 	{
