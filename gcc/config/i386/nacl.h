@@ -240,6 +240,11 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_AS_GOTOFF_IN_DATA
 #define HAVE_AS_GOTOFF_IN_DATA 1
 
+/* Configure script incorrectly detects HAVE_GAS_CFI_DIRECTIVE when readelf is
+ * not found in PATH. */
+#undef HAVE_GAS_CFI_DIRECTIVE
+#define HAVE_GAS_CFI_DIRECTIVE 1
+
 /* NaCl reserves R15 and makes RBP special in x86-64 mode */
 #undef FIXED_REGISTERS
 #define FIXED_REGISTERS						\
