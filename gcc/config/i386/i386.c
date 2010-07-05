@@ -7466,7 +7466,7 @@ ix86_file_end (void)
 	  (*targetm.asm_out.unique_section) (decl, 0);
 	  switch_to_section (get_named_section (decl, NULL, 0));
 
-	  if (TARGET_NACL && !getenv("NONACLRET"))
+	  if (TARGET_NACL)
 	    fprintf (asm_out_file, ".p2align %d\n", NACL_ALIGN_POW2);
 	  (*targetm.asm_out.globalize_label) (asm_out_file, name);
 	  fputs ("\t.hidden\t", asm_out_file);
@@ -7477,12 +7477,12 @@ ix86_file_end (void)
       else
 	{
 	  switch_to_section (text_section);
-	  if (TARGET_NACL && !getenv("NONACLRET"))
+	  if (TARGET_NACL)
 	    fprintf (asm_out_file, ".p2align %d\n", NACL_ALIGN_POW2);
 	  ASM_OUTPUT_LABEL (asm_out_file, name);
 	}
 
-      if (TARGET_NACL && !getenv("NONACLRET"))
+      if (TARGET_NACL)
         {
           xops[0] = gen_rtx_REG (Pmode, regno);
           output_asm_insn ("pop{l}\t%0", xops);
@@ -8731,8 +8731,7 @@ ix86_expand_epilogue (int style)
 	 return address, do explicit add, and jump indirectly to the
 	 caller.  */
 
-      if ((TARGET_NACL && !getenv("NONACLRET")) ||
-	  (crtl->args.pops_args >= 65536))
+      if (crtl->args.pops_args >= 65536 || TARGET_NACL)
 	{
           /* x86_64 dedicates R11 for call-scratch needs */
 	  rtx reg1 = gen_rtx_REG (Pmode, TARGET_64BIT ? R11_REG : CX_REG);
@@ -8740,18 +8739,17 @@ ix86_expand_epilogue (int style)
 
 	  emit_insn ((*ix86_gen_pop1) (reg1));
 	  emit_insn ((*ix86_gen_add3) (stack_pointer_rtx, stack_pointer_rtx, popc));
-	  if (TARGET_NACL && !getenv("NONACLRET")) {
+	  if (TARGET_NACL)
 	    emit_jump_insn (gen_nacl_return_indirectsi (reg2));
-	  } else {
+	  else
 	    emit_jump_insn (gen_return_indirect_internal (reg1));
-	  }
 	}
       else
 	emit_jump_insn (gen_return_pop_internal (popc));
     }
   else
     {
-      if (TARGET_NACL && !getenv("NONACLRET"))
+      if (TARGET_NACL)
         {
 	  /* x86_64 dedicates R11 for call-scratch needs */
 	  rtx reg1 = gen_rtx_REG (Pmode, TARGET_64BIT ? R11_REG : CX_REG);
@@ -9201,24 +9199,23 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
    *          movl    $0, %nacl:_ZL3zzz+64(%r15,%rdx,4)
    *          jne     .L2
    * */
-  if (!getenv("NACL_ALLOW_MAGIC_DISP") &&
-      TARGET_64BIT && TARGET_NACL &&
+  if (TARGET_64BIT && TARGET_NACL &&
       index_reg &&
       disp && GET_CODE(disp) == CONST)
     {
       rtx opcode = XEXP(disp, 0);
       if (GET_CODE(opcode) == PLUS)
-        {
-          rtx cnst = XEXP(opcode, 1);
-          if (GET_CODE(cnst) != CONST_INT || INTVAL(cnst) > 0)
-            return 0;
-        }
+	{
+	  rtx cnst = XEXP(opcode, 1);
+	  if (GET_CODE(cnst) != CONST_INT || INTVAL(cnst) > 0)
+	    return 0;
+	}
       else if (GET_CODE(opcode) == MINUS)
-        {
-          rtx cnst = XEXP(opcode, 1);
-          if (GET_CODE(cnst) != CONST_INT || INTVAL(cnst) < 0)
-            return 0;
-        }
+	{
+	  rtx cnst = XEXP(opcode, 1);
+	  if (GET_CODE(cnst) != CONST_INT || INTVAL(cnst) < 0)
+	    return 0;
+	}
     }
 
   /* Allow arg pointer and stack pointer as index if there is not scaling.  */
