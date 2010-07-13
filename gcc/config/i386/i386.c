@@ -7483,23 +7483,26 @@ ix86_file_end (void)
 	}
 
       if (TARGET_NACL)
-        {
-          xops[0] = gen_rtx_REG (Pmode, regno);
-          output_asm_insn ("pop{l}\t%0", xops);
-          if (TARGET_64BIT) {
-	    xops[0] = simplify_gen_subreg(SImode, xops[0], Pmode, 0);
-            output_asm_insn ("nacljmp\t%0,%%r15", xops+1);
-          } else {
-            output_asm_insn ("nacljmp\t%0", xops);
-          }
-        }
+	{
+	  xops[0] = gen_rtx_REG (Pmode, regno);
+	  output_asm_insn ("pop{l}\t%0", xops);
+	  if (TARGET_64BIT)
+	    {
+	      xops[0] = simplify_gen_subreg (SImode, xops[0], Pmode, 0);
+	      output_asm_insn ("nacljmp\t%0,%%r15", xops + 1);
+	    }
+	  else
+	    {
+	      output_asm_insn ("nacljmp\t%0", xops);
+	    }
+	}
       else
-        {
-      xops[0] = gen_rtx_REG (Pmode, regno);
-      xops[1] = gen_rtx_MEM (Pmode, stack_pointer_rtx);
-      output_asm_insn ("mov%z0\t{%1, %0|%0, %1}", xops);
-      output_asm_insn ("ret", xops);
-    }
+	{
+	  xops[0] = gen_rtx_REG (Pmode, regno);
+	  xops[1] = gen_rtx_MEM (Pmode, stack_pointer_rtx);
+	  output_asm_insn ("mov%z0\t{%1, %0|%0, %1}", xops);
+	  output_asm_insn ("ret", xops);
+	}
     }
 
   if (NEED_INDICATE_EXEC_STACK)
@@ -8634,9 +8637,10 @@ ix86_expand_epilogue (int style)
 					    + frame.padding0),
 				   style);
       /* If not an i386, mov & pop is faster than "leave".  */
-      else if (!TARGET_NACL &&
-               (TARGET_USE_LEAVE || optimize_function_for_size_p (cfun)
-	       || !cfun->machine->use_fast_prologue_epilogue))
+      else if (!TARGET_NACL
+	       && (TARGET_USE_LEAVE
+		   || optimize_function_for_size_p (cfun)
+		   || !cfun->machine->use_fast_prologue_epilogue))
 	emit_insn ((*ix86_gen_leave) ());
       else
 	{
@@ -8721,8 +8725,6 @@ ix86_expand_epilogue (int style)
   if (style == 0)
     return;
 
-#define gen_nacl_return_indirect \
-  (TARGET_64BIT ? gen_nacl_return_indirectdi : gen_nacl_return_indirectsi)
   if (crtl->args.pops_args && crtl->args.size)
     {
       rtx popc = GEN_INT (crtl->args.pops_args);
@@ -8733,9 +8735,9 @@ ix86_expand_epilogue (int style)
 
       if (crtl->args.pops_args >= 65536 || TARGET_NACL)
 	{
-          /* x86_64 dedicates R11 for call-scratch needs */
+	  /* x86_64 dedicates R11 for call-scratch needs */
 	  rtx reg1 = gen_rtx_REG (Pmode, TARGET_64BIT ? R11_REG : CX_REG);
-          rtx reg2 = gen_rtx_REG (SImode, TARGET_64BIT ? R11_REG : CX_REG);
+	  rtx reg2 = gen_rtx_REG (SImode, TARGET_64BIT ? R11_REG : CX_REG);
 
 	  emit_insn ((*ix86_gen_pop1) (reg1));
 	  emit_insn ((*ix86_gen_add3) (stack_pointer_rtx, stack_pointer_rtx, popc));
@@ -8756,10 +8758,10 @@ ix86_expand_epilogue (int style)
 	  rtx reg2 = gen_rtx_REG (SImode, TARGET_64BIT ? R11_REG : CX_REG);
 
 	  emit_insn ((*ix86_gen_pop1) (reg1));
-          emit_jump_insn (gen_nacl_return_indirectsi (reg2));
-        }
+	  emit_jump_insn (gen_nacl_return_indirectsi (reg2));
+	}
       else
-    emit_jump_insn (gen_return_internal ());
+	  emit_jump_insn (gen_return_internal ());
     }
 }
 
@@ -8978,7 +8980,7 @@ lea_match_address_operand (rtx op, enum machine_mode mode)
 }
 
 static int
-gen_r15(rtx reg)
+gen_r15 (rtx reg)
 {
   rtx base_reg;
 
@@ -8988,7 +8990,7 @@ gen_r15(rtx reg)
   if (!reg)
     return 1;
   base_reg = GET_CODE (reg) == SUBREG ? SUBREG_REG (reg) : reg;
-  switch (REGNO(base_reg))
+  switch (REGNO (base_reg))
     {
       case R15_REG:
       case STACK_POINTER_REGNUM:
@@ -9021,16 +9023,14 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
 
   if (REG_P (addr) || GET_CODE (addr) == SUBREG)
     {
-      if (!base && gen_r15(addr))
-        {
+      if (!base && gen_r15 (addr))
+	{
 	  seg = SEG_NACL;
 	  base = gen_rtx_REG (Pmode, R15_REG);
 	  index = addr;
-        }
+	}
       else
-        {
-    base = addr;
-        }
+	  base = addr;
     }
   else if (GET_CODE (addr) == PLUS)
     {
@@ -9042,16 +9042,16 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
 	{
 	  if (n >= 4)
 	    return 0;
-	  if (GET_CODE(XEXP (op, 1)) == PLUS)
+	  if (GET_CODE (XEXP (op, 1)) == PLUS)
 	    {
 	      addends[n++] = XEXP (op, 0);
 	      op = XEXP (op, 1);
 	    }
 	  else
 	    {
-	  addends[n++] = XEXP (op, 1);
-	  op = XEXP (op, 0);
-	}
+	      addends[n++] = XEXP (op, 1);
+	      op = XEXP (op, 0);
+	    }
 	}
       while (GET_CODE (op) == PLUS);
       if (n >= 4)
@@ -9067,7 +9067,7 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
 	      if (index)
 		return 0;
 	      index = XEXP (op, 0);
-	      if (!base && gen_r15(index))
+	      if (!base && gen_r15 (index))
 		{
 		   seg = SEG_NACL;
 		   base = gen_rtx_REG (Pmode, R15_REG);
@@ -9077,8 +9077,8 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
 
 	    case UNSPEC:
 	      if (XINT (op, 1) == UNSPEC_TP
-	          && TARGET_TLS_DIRECT_SEG_REFS
-	          && seg == SEG_DEFAULT)
+		  && TARGET_TLS_DIRECT_SEG_REFS
+		  && seg == SEG_DEFAULT)
 		seg = TARGET_64BIT ? SEG_FS : SEG_GS;
 	      else
 		return 0;
@@ -9086,14 +9086,14 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
 
 	    case REG:
 	    case SUBREG:
-              if (!base && TARGET_64BIT)
+	      if (!base && TARGET_64BIT)
 		{
-		  if (gen_r15(op))
+		  if (gen_r15 (op))
 		    {
-                      seg = SEG_NACL;
-                      base = gen_rtx_REG (Pmode, R15_REG);
-                      if (index)
-                        return 0;
+		      seg = SEG_NACL;
+		      base = gen_rtx_REG (Pmode, R15_REG);
+		      if (index)
+		        return 0;
 			index = op;
 		    }
 		  else
@@ -9131,7 +9131,7 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
   else if (GET_CODE (addr) == MULT)
     {
       index = XEXP (addr, 0);		/* index*scale */
-      if (!base && gen_r15(index))
+      if (!base && gen_r15 (index))
         {
 	  seg = SEG_NACL;
 	  base = gen_rtx_REG (Pmode, R15_REG);
@@ -9144,7 +9144,7 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
 
       /* We're called for lea too, which implements ashift on occasion.  */
       index = XEXP (addr, 0);
-      if (!base && gen_r15(index))
+      if (!base && gen_r15 (index))
         {
 	  seg = SEG_NACL;
 	  base = gen_rtx_REG (Pmode, R15_REG);
@@ -9172,48 +9172,47 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
   base_reg = base && GET_CODE (base) == SUBREG ? SUBREG_REG (base) : base;
   index_reg = index && GET_CODE (index) == SUBREG ? SUBREG_REG (index) : index;
 
-  if (!base_reg && !index_reg && CONST_INT_P (disp) && gen_r15(0))
+  if (!base_reg && !index_reg && CONST_INT_P (disp) && gen_r15 (0))
     {
       base_reg = base = gen_rtx_REG (Pmode, R15_REG);
     }
 
   /* Disallow positive constant displacement followed by a register offset for
-   * NaCl64. This may hurt when a symbol is referenced with integer overflow in
-   * mind. NaCl64 will miss overflow because of sandboxing base addition in the
-   * middle.
-   *
-   * Example problem code:
-   * static struct ppp* zzz[16 * 2 + 1];
-   * int main() {
-   *   for (int i = -16; i <= 16; i++)
-   *   zzz[i + 16] = NULL;
-   *   return 0;
-   * }
-   *
-   * Incorrect assembly generated with -O2:
-   *          movl    $-16, %eax
-   *  .L2:
-   *          mov     %eax, %edx
-   *          addl    $1, %eax
-   *          cmpl    $17, %eax
-   *          movl    $0, %nacl:_ZL3zzz+64(%r15,%rdx,4)
-   *          jne     .L2
-   * */
-  if (TARGET_64BIT && TARGET_NACL &&
-      index_reg &&
-      disp && GET_CODE(disp) == CONST)
+     NaCl64.  This may hurt when a symbol is referenced with integer overflow in
+     mind.  NaCl64 will miss overflow because of sandboxing base addition in the
+     middle.
+
+     Example problem code:
+     static struct ppp* zzz[16 * 2 + 1];
+     int main ()
+     {
+       for (int i = -16; i <= 16; i++)
+	 zzz[i + 16] = NULL;
+       return 0;
+     }
+
+     Incorrect assembly generated with -O2:
+	      movl    $-16, %eax
+      .L2:
+	      mov     %eax, %edx
+	      addl    $1, %eax
+	      cmpl    $17, %eax
+	      movl    $0, %nacl:_ZL3zzz+64(%r15,%rdx,4)
+	      jne     .L2  */
+  if (TARGET_64BIT && TARGET_NACL
+      && index_reg && disp && GET_CODE (disp) == CONST)
     {
-      rtx opcode = XEXP(disp, 0);
-      if (GET_CODE(opcode) == PLUS)
+      rtx opcode = XEXP (disp, 0);
+      if (GET_CODE (opcode) == PLUS)
 	{
-	  rtx cnst = XEXP(opcode, 1);
-	  if (GET_CODE(cnst) != CONST_INT || INTVAL(cnst) > 0)
+	  rtx cnst = XEXP (opcode, 1);
+	  if (GET_CODE (cnst) != CONST_INT || INTVAL (cnst) > 0)
 	    return 0;
 	}
-      else if (GET_CODE(opcode) == MINUS)
+      else if (GET_CODE (opcode) == MINUS)
 	{
-	  rtx cnst = XEXP(opcode, 1);
-	  if (GET_CODE(cnst) != CONST_INT || INTVAL(cnst) < 0)
+	  rtx cnst = XEXP (opcode, 1);
+	  if (GET_CODE (cnst) != CONST_INT || INTVAL (cnst) < 0)
 	    return 0;
 	}
     }
@@ -9666,7 +9665,7 @@ legitimate_address_parts_p (const struct ix86_address *parts, int strict)
 	  goto report_error;
 	}
 
-      /* Allow 32bit addr in 64bit mode - usually makes no sense except in LEA */
+      /* Allow 32bit addr in 64bit mode - usually makes no sense except in LEA.  */
       if (GET_MODE (base) != SImode && (!TARGET_64BIT || GET_MODE (base) != DImode))
 	{
 	  reason = "base is not in proper mode";
@@ -9893,7 +9892,7 @@ legitimize_pic_address (rtx orig, rtx reg)
   rtx base;
   enum machine_mode orig_mode;
 
-  orig_mode = GET_MODE(orig);
+  orig_mode = GET_MODE (orig);
 #if TARGET_MACHO
   if (TARGET_MACHO && !TARGET_64BIT)
     {
@@ -10556,17 +10555,17 @@ legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED, enum machine_mode mode)
 	  if (val != temp)
 	    {
 	      /* NaCl uses mixed 32bit/64bit mode and sometimes we need to move
-		 32bit register to 64bit register at this point. x86-64 ABI
+		 32bit register to 64bit register at this point.  x86-64 ABI
 		 clears top half of 64bit register in all mov instructions thus
 		 we can just use subregister move here. */
 	      if (TARGET_64BIT && GET_MODE (val) == SImode)
 		{
-		  emit_move_insn(simplify_gen_subreg (SImode, temp,
-						      GET_MODE(temp), 0), val);
+		  emit_move_insn (simplify_gen_subreg (SImode, temp,
+						       GET_MODE (temp), 0), val);
 		}
 	      else
 		{
-	    emit_move_insn (temp, val);
+		  emit_move_insn (temp, val);
 		}
 	    }
 
@@ -10581,17 +10580,17 @@ legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED, enum machine_mode mode)
 	  if (val != temp)
 	    {
 	      /* NaCl uses mixed 32bit/64bit mode and sometimes we need to move
-		 32bit register to 64bit register at this point. x86-64 ABI
+		 32bit register to 64bit register at this point.  x86-64 ABI
 		 clears top half of 64bit register in all mov instructions thus
 		 we can just use subregister move here. */
 	      if (TARGET_64BIT && GET_MODE (val) == SImode)
 		{
-		  emit_move_insn(simplify_gen_subreg (SImode, temp,
-						      GET_MODE(temp), 0), val);
+		  emit_move_insn (simplify_gen_subreg (SImode, temp,
+						       GET_MODE (temp), 0), val);
 		}
 	      else
 		{
-	    emit_move_insn (temp, val);
+		  emit_move_insn (temp, val);
 		}
 	    }
 
@@ -12832,20 +12831,20 @@ ix86_expand_move (enum machine_mode mode, rtx operands[])
 	  if (Pmode == ptr_mode || model)
 	    {
 	      tmp = expand_simple_binop (ptr_mode, PLUS, tmp, addend,
-				         op0, 1, OPTAB_DIRECT);
+					 op0, 1, OPTAB_DIRECT);
 	      if (tmp == op0)
 		return;
 	    }
-	   else
-	     {
-	       /* Lower the size of the constant ref operand in non-Pmode */
-	       tmp = gen_rtx_UNSPEC(ptr_mode, gen_rtvec(1, symbol), UNSPEC_TPOFF);
-	       tmp = gen_rtx_CONST(ptr_mode, tmp);
-	       tmp = gen_lowpart(ptr_mode, tmp);
-	       tmp = expand_simple_binop (ptr_mode, PLUS, tmp, addend,
-					  op0, 1, OPTAB_DIRECT);
-	       op1 = tmp;
-	     }
+	  else
+	    {
+	      /* Lower the size of the constant ref operand in non-Pmode.  */
+	      tmp = gen_rtx_UNSPEC (ptr_mode, gen_rtvec (1, symbol), UNSPEC_TPOFF);
+	      tmp = gen_rtx_CONST (ptr_mode, tmp);
+	      tmp = gen_lowpart (ptr_mode, tmp);
+	      tmp = expand_simple_binop (ptr_mode, PLUS, tmp, addend,
+					 op0, 1, OPTAB_DIRECT);
+	      op1 = tmp;
+	    }
 	}
     }
 
@@ -12926,10 +12925,10 @@ ix86_expand_move (enum machine_mode mode, rtx operands[])
     }
 
   /* NaCl uses mixed 32bit/64bit mode and sometimes we need to move
-     32bit register to 64bit register at this point. x86-64 ABI
+     32bit register to 64bit register at this point.  x86-64 ABI
      clears top half of 64bit register in all mov instructions thus
      we can just use subregister move here. */
-  if (TARGET_64BIT && GET_MODE (op0) == SImode && GET_MODE(op1) == DImode)
+  if (TARGET_64BIT && GET_MODE (op0) == SImode && GET_MODE (op1) == DImode)
     op1 = simplify_gen_subreg (SImode, op1, DImode, 0);
   emit_insn (gen_rtx_SET (VOIDmode, op0, op1));
 }
@@ -19274,7 +19273,7 @@ ix86_expand_call (rtx retval, rtx fnaddr, rtx callarg1,
       if (Pmode != ptr_mode)
 	{
 	  fnaddr = gen_lowpart (Pmode, fnaddr);
-	  fnaddr = force_reg(Pmode, fnaddr);
+	  fnaddr = force_reg (Pmode, fnaddr);
 	}
       fnaddr = gen_rtx_MEM (QImode, fnaddr);
     }
