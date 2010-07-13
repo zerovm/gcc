@@ -6701,6 +6701,11 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
     case BUILT_IN_SETJMP_SETUP:
       /* __builtin_setjmp_setup is passed a pointer to an array of five words
           and the receiver label.  */
+      if (TARGET_NACL)
+        {
+	  error ("%<__builtin_setjmp%> is not available, use setjmp call");
+          break;
+        }
       if (validate_arglist (exp, POINTER_TYPE, POINTER_TYPE, VOID_TYPE))
 	{
 	  rtx buf_addr = expand_expr (CALL_EXPR_ARG (exp, 0), subtarget,
@@ -6751,6 +6756,11 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
 	 It's similar to the C library longjmp function but works with
 	 __builtin_setjmp above.  */
     case BUILT_IN_LONGJMP:
+      if (TARGET_NACL)
+        {
+	  error ("%<__builtin_longjmp%> is not available, use longjmp call");
+          break;
+        }
       if (validate_arglist (exp, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE))
 	{
 	  rtx buf_addr = expand_expr (CALL_EXPR_ARG (exp, 0), subtarget,
