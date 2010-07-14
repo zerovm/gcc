@@ -621,22 +621,7 @@ enum target_cpu_default
 #define LONG_TYPE_SIZE BITS_PER_WORD
 #define DOUBLE_TYPE_SIZE 64
 #define LONG_LONG_TYPE_SIZE 64
-#define LONG_DOUBLE_TYPE_SIZE (TARGET_80387 ? 80 : 64)
-
-/* With SSE2 but no 80387 we can not use 80bit long double but with 80387 we
-   must use 80bit long double in registers - hardware limitation in both cases */
-
-#undef GET_MODE_WIDER_MODE
-#define GET_MODE_WIDER_MODE(MODE) \
-	(TARGET_80387 ? mode_wider[MODE] : \
-	 ((MODE) != DFmode && (MODE) != XFmode && (MODE) != V4DFmode && \
-	  (MODE) != DCmode && (MODE) != XCmode) ? mode_wider[MODE] : \
-						  VOIDmode)
-#undef GET_MODE_2XWIDER_MODE
-#define GET_MODE_2XWIDER_MODE(MODE) \
-	(TARGET_80387 ? mode_2xwider[MODE] : \
-	 ((MODE) != DFmode && (MODE) != XFmode) ? mode_2xwider[MODE] : \
-						  VOIDmode)
+#define LONG_DOUBLE_TYPE_SIZE 80
 
 #define WIDEST_HARDWARE_FP_SIZE LONG_DOUBLE_TYPE_SIZE
 
