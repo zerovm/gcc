@@ -613,13 +613,7 @@ copy_addr_to_reg (rtx x)
 rtx
 copy_to_mode_reg (enum machine_mode mode, rtx x)
 {
-  rtx temp;
-
-  /* It's safe to move SImode register instead of DImode register in x86-64 */
-  if (mode == DImode && GET_MODE (x) == SImode && GET_CODE(x) == CONST)
-    mode = SImode;
-
-  temp = gen_reg_rtx (mode);
+  rtx temp = gen_reg_rtx (mode);
 
   /* If not an operand, must be an address with PLUS and MULT so
      do the computation.  */

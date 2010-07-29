@@ -8965,6 +8965,9 @@ lea_match_address_operand (rtx op, enum machine_mode mode)
 {
   struct ix86_address parts;
 
+  if (GET_MODE (op) != mode)
+    return 0;
+
   /* 1 and -1 are valid decompose address results for lea operand.  */
   if (ix86_lea_decompose_address (op, &parts) == 0)
     return 0;      

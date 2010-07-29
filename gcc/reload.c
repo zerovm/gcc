@@ -4692,9 +4692,6 @@ find_reloads_toplev (rtx x, int opnum, enum reload_type type,
 	  && reg_equiv_constant[regno] != 0)
 	{
 	  tem =
-	    GET_MODE (x) == GET_MODE(reg_equiv_constant[regno]) ?
-		reg_equiv_constant[regno]
-	    :
 	    simplify_gen_subreg (GET_MODE (x), reg_equiv_constant[regno],
 				 GET_MODE (SUBREG_REG (x)), SUBREG_BYTE (x));
 	  gcc_assert (tem);
