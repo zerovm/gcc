@@ -23,6 +23,15 @@ Boston, MA 02111-1307, USA.  */
 
 #define TARGET_NACL (flag_control_integrity)
 
+/* ??? Blah -- this macro is used directly by libobjc.  Since it
+   supports no vector modes, cut out the complexity and fall back
+   on BIGGEST_FIELD_ALIGNMENT.  NaCl uses x86-64 style alignment
+   in IA32 mode so we must redefine it. */
+#ifdef IN_TARGET_LIBS
+#undef BIGGEST_FIELD_ALIGNMENT
+#define BIGGEST_FIELD_ALIGNMENT 128
+#endif
+
 /* These definitions modify those in i386elf.h. */
 
 #undef TARGET_VERSION
@@ -229,7 +238,7 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_SUBTARGET_DEFAULT (MASK_IEEE_FP)
 
 #undef TARGET_SUBTARGET32_DEFAULT
-#define TARGET_SUBTARGET32_DEFAULT (MASK_80387 | MASK_FLOAT_RETURNS)
+#define TARGET_SUBTARGET32_DEFAULT (MASK_80387 | MASK_ALIGN_DOUBLE | MASK_FLOAT_RETURNS)
 
 #undef TARGET_SUBTARGET64_DEFAULT
 #define TARGET_SUBTARGET64_DEFAULT 0
