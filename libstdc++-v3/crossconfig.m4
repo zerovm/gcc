@@ -131,7 +131,10 @@ case "${host}" in
 	;;
     esac
     ;;
-  *-linux* | *-uclinux* | *-gnu* | *-kfreebsd*-gnu | *-knetbsd*-gnu)
+  # TODO(mseaborn): Maybe we should handle NaCl by changing NaCl's
+  # configuration name to "nacl-gnu", so that we do not need an extra
+  # case here.
+  *-linux* | *-uclinux* | *-gnu* | *-kfreebsd*-gnu | *-knetbsd*-gnu | nacl*)
     GLIBCXX_CHECK_COMPILER_FEATURES
     GLIBCXX_CHECK_LINKER_FEATURES
     GLIBCXX_CHECK_MATH_SUPPORT
