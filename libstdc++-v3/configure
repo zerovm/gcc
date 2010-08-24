@@ -77204,7 +77204,7 @@ _ACEOF
   # TODO(mseaborn): Maybe we should handle NaCl by changing NaCl's
   # configuration name to "nacl-gnu", so that we do not need an extra
   # case here.
-  *-linux* | *-uclinux* | *-gnu* | *-kfreebsd*-gnu | *-knetbsd*-gnu | nacl*)
+  *-linux* | *-uclinux* | *-gnu* | *-kfreebsd*-gnu | *-knetbsd*-gnu | *-nacl*)
 
   # All these tests are for C++; save the language and the compiler flags.
   # The CXXFLAGS thing is suspicious, but based on similar bits previously
