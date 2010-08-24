@@ -4989,7 +4989,7 @@ freebsd* | dragonfly*)
   fi
   ;;
 
-gnu* | nc)
+gnu*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
@@ -5027,7 +5027,7 @@ irix5* | irix6* | nonstopux*)
   ;;
 
 # This must be Linux ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | nc)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
@@ -15124,7 +15124,7 @@ fi;
   # Default to "generic".
   if test $enable_clocale_flag = auto; then
     case ${target_os} in
-      linux* | gnu* | kfreebsd*-gnu | knetbsd*-gnu | nc)
+      linux* | gnu* | kfreebsd*-gnu | knetbsd*-gnu)
         enable_clocale_flag=gnu
         ;;
       darwin* | freebsd*)
@@ -15870,7 +15870,7 @@ fi;
   # Default to "new".
   if test $enable_libstdcxx_allocator_flag = auto; then
     case ${target_os} in
-      linux* | gnu* | kfreebsd*-gnu | knetbsd*-gnu | nc)
+      linux* | gnu* | kfreebsd*-gnu | knetbsd*-gnu)
         enable_libstdcxx_allocator_flag=new
         ;;
       *)
