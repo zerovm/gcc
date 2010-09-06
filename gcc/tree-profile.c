@@ -431,6 +431,42 @@ tree_gen_ior_profiler (histogram_value value, unsigned tag, unsigned base)
   add_abnormal_goto_call_edges (gsi);
 }
 
+/* Output instructions as GIMPLE trees to suspend thread if needed.  */
+
+static void
+tree_gen_thread_suspension_instrumentation (edge e)
+{
+  static tree tree_suspend_thread_fn = NULL_TREE;
+
+  basic_block bb;
+  gimple_stmt_iterator gsi;
+  gimple stmt;
+
+  if (tree_suspend_thread_fn == NULL_TREE)
+    {
+      tree type = build_function_type (void_type_node, void_list_node);
+      tree id = get_identifier ("__nacl_suspend_thread_if_needed");
+      tree decl = build_decl (FUNCTION_DECL, id, type);
+
+      tree libname = get_identifier ("__nacl_suspend_thread_if_needed");
+
+      TREE_PUBLIC (decl) = 1;
+      DECL_EXTERNAL (decl) = 1;
+
+      SET_DECL_ASSEMBLER_NAME (decl, libname);
+
+      tree_suspend_thread_fn = decl;
+    }
+
+  bb = split_edge (e);
+  gsi = gsi_start_bb (bb);
+
+  stmt = gimple_build_call (tree_suspend_thread_fn, 0);
+
+  gsi_insert_after (&gsi, stmt, GSI_NEW_STMT);
+  add_abnormal_goto_call_edges (gsi);
+}
+
 /* Return 1 if tree-based profiling is in effect, else 0.
    If it is, set up hooks for tree-based profiling.
    Gate for pass_tree_profile.  */
@@ -444,12 +480,41 @@ do_tree_profiling (void)
       gimple_register_value_prof_hooks ();
       return true;
     }
+  /* HACK: enable this pass for inserting thread suspension instrumentation.  */
+  if (flag_instrument_for_thread_suspension)
+    return true;
   return false;
 }
 
 static unsigned int
 tree_profiling (void)
 {
+  /* Perhaps this code should go somewhere else...
+     And probably it should not run after_tree_profile...  */
+  if (flag_instrument_for_thread_suspension)
+    {
+      basic_block bb;
+      edge e;
+      edge_iterator ei;
+
+      mark_dfs_back_edges ();
+
+      FOR_EACH_BB (bb)
+        {
+          FOR_EACH_EDGE (e, ei, bb->preds)
+            {
+              /* Instrument beginning of the function and back edges.  */
+              if (e->src == ENTRY_BLOCK_PTR
+                  || e->flags & EDGE_DFS_BACK)
+                tree_gen_thread_suspension_instrumentation (e);
+            }
+        }
+
+      /* HACK: exit if we only need thread suspension instrumentation.  */
+      if (!(profile_arc_flag || flag_test_coverage || flag_branch_probabilities))
+        return 0;
+    }
+
   /* Don't profile functions produced at destruction time, particularly
      the gcov datastructure initializer.  Don't profile if it has been
      already instrumented either (when OpenMP expansion creates

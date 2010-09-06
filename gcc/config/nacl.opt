@@ -52,3 +52,6 @@ Common Report Var(flag_nacl_align_pow2,4) Init(NACL_ALIGN_POW2)
 
 fnacl-align-32
 Common Report Var(flag_nacl_align_pow2,5)
+
+finstrument-for-thread-suspension
+Common Report Var(flag_instrument_for_thread_suspension)
