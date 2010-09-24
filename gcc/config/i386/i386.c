@@ -10113,6 +10113,31 @@ get_thread_pointer (int to_reg)
 {
   rtx tp, reg, insn;
 
+  if (TARGET_64BIT && TARGET_NACL)
+    {
+      rtx rax = gen_rtx_REG (Pmode, AX_REG);
+
+      insn = emit_call_insn (
+          gen_rtx_SET (
+              VOIDmode,
+              rax,
+              gen_rtx_CALL (
+                  VOIDmode,
+                  gen_rtx_MEM (
+                     QImode,
+                     gen_rtx_SYMBOL_REF (Pmode, "__nacl_read_tp")),
+                  const0_rtx)));
+      /* For ix86_cmodel == CM_LARGE_PIC we should add use of pic register
+         (see ix86_expand_call). However, NaCl can't use CM_LARGE* models  */
+      RTL_CONST_CALL_P (insn) = 1;
+
+      reg = gen_reg_rtx (Pmode);
+      insn = gen_rtx_SET (VOIDmode, reg, rax);
+      insn = emit_insn (insn);
+
+      return reg;
+    }
+
   tp = gen_rtx_UNSPEC (Pmode, gen_rtvec (1, const0_rtx), UNSPEC_TP);
   if (!to_reg)
     return tp;
@@ -10137,6 +10162,11 @@ legitimize_tls_address (rtx x, enum tls_model model, int for_mov)
   switch (model)
     {
     case TLS_MODEL_GLOBAL_DYNAMIC:
+      /* NaCl64: x may come in Pmode and in ptr_mode (if for_mov is true?).
+         Force Pmode for tls_global_dynamic_64 insn.  */
+      if (TARGET_64BIT && TARGET_NACL)
+        x = convert_memory_address (Pmode, x);
+
       dest = gen_reg_rtx (Pmode);
       tp = TARGET_GNU2_TLS ? get_thread_pointer (1) : 0;
 
@@ -10166,6 +10196,11 @@ legitimize_tls_address (rtx x, enum tls_model model, int for_mov)
       break;
 
     case TLS_MODEL_LOCAL_DYNAMIC:
+      /* NaCl64: x may come in Pmode and in ptr_mode (if for_mov is true?).
+         Force Pmode for tls_local_dynamic_base_64 insn.  */
+      if (TARGET_64BIT && TARGET_NACL)
+        x = convert_memory_address (Pmode, x);
+
       base = gen_reg_rtx (Pmode);
       tp = TARGET_GNU2_TLS ? get_thread_pointer (1) : 0;
 
@@ -10257,15 +10292,6 @@ legitimize_tls_address (rtx x, enum tls_model model, int for_mov)
       break;
 
     case TLS_MODEL_LOCAL_EXEC:
-      if (TARGET_64BIT && TARGET_NACL)
-	{
-	  rtx rax = gen_rtx_REG (Pmode, AX_REG);
-	  emit_insn (gen_naclcall_tls (rax, x));
-	  dest = gen_reg_rtx (Pmode);
-	  emit_move_insn (dest, rax);
-	  return dest;
-	}
-
       off = gen_rtx_UNSPEC (Pmode, gen_rtvec (1, x),
 			    (TARGET_64BIT || TARGET_ANY_GNU_TLS)
 			    ? UNSPEC_NTPOFF : UNSPEC_TPOFF);
