@@ -9892,8 +9892,11 @@ gen_lowpart_for_combine (enum machine_mode omode, rtx x)
     return x;
 
   /* Return identity if this is a CONST or symbolic reference.  */
+  /* HACK?
+     When ptr_mode != Pmode, we should not return CONST:ptr_mode for Pmode
+     and vice versa as this confuses SUBST.  */
   if (omode == Pmode
-      && (GET_CODE (x) == CONST
+      && ((GET_CODE (x) == CONST && ptr_mode == Pmode)
 	  || GET_CODE (x) == SYMBOL_REF
 	  || GET_CODE (x) == LABEL_REF))
     return x;
