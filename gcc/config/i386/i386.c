@@ -1818,7 +1818,6 @@ static bool ix86_valid_target_attribute_p (tree, tree, tree, int);
 static bool ix86_valid_target_attribute_inner_p (tree, char *[]);
 static bool ix86_can_inline_p (tree, tree);
 static void ix86_set_current_function (tree);
-static int ix86_lea_decompose_address (rtx, struct ix86_address *);
 static int legitimate_address_parts_p (const struct ix86_address *, int);
 static void print_operand_address_parts (FILE *, const struct ix86_address *);
 
@@ -8796,7 +8795,7 @@ ix86_output_function_epilogue (FILE *file ATTRIBUTE_UNUSED,
    instruction.
    WARNING: This is a copy-paste of the original ix86_decompose_address.  */
 
-static int
+int
 ix86_lea_decompose_address (rtx addr, struct ix86_address *out)
 {
   rtx base = NULL_RTX, index = NULL_RTX, disp = NULL_RTX;

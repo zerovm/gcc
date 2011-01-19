@@ -263,6 +263,7 @@ struct ix86_address
 
 extern int lea_match_address_operand (rtx, enum machine_mode);
 extern int ix86_decompose_address (rtx, struct ix86_address *);
+extern int ix86_lea_decompose_address (rtx, struct ix86_address *);
 extern int memory_address_length (rtx addr);
 extern void x86_output_aligned_bss (FILE *, tree, const char *,
 				    unsigned HOST_WIDE_INT, int);
