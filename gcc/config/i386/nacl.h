@@ -169,6 +169,10 @@ Boston, MA 02111-1307, USA.  */
       %{" SPEC_64 ":%{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER64 "}}} \
     %{static:-static}}"
 
+#undef LINK_GCC_C_SEQUENCE_SPEC
+#define LINK_GCC_C_SEQUENCE_SPEC \
+  "%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"
+
 #if TARGET_64BIT_DEFAULT
 #define MULTILIB_DEFAULTS { "m64" }
 #else
