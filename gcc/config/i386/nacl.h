@@ -57,8 +57,7 @@ Boston, MA 02111-1307, USA.  */
    the GNU/Linux magical crtend.o file (see crtstuff.c) which provides part of
    the support for getting C++ file-scope static object constructed before
    entering `main', followed by a normal GNU/Linux "finalizer" file, `crtn.o'.
-   TODO(pasko): add -ffast-math support to ENDFILE_SPEC.
-   */
+   TODO(pasko): add -ffast-math support to ENDFILE_SPEC.  */
 
 #undef	ENDFILE_SPEC
 #define ENDFILE_SPEC \
@@ -79,7 +78,7 @@ Boston, MA 02111-1307, USA.  */
    %{shared:-lc} \
    %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}}"
 
-/* Pass the NativeClient specific options to the assembler */
+/* Pass the NativeClient specific options to the assembler.  */
 #undef  ASM_SPEC
 #define ASM_SPEC \
   "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} " \
@@ -89,7 +88,7 @@ Boston, MA 02111-1307, USA.  */
   "%{Ym,*} %{Yd,*} %{Wa,*:%*} %{m32:--32} %{m64:--64} " \
   "%{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
 
-/* `crt_platform' contains low-level platform-specific intrinsics in C. */
+/* `crt_platform' contains low-level platform-specific intrinsics in C.  */
 #undef	LIB_SPEC
 #define LIB_SPEC \
   "%{pthread:-lpthread} \
@@ -113,8 +112,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 /* TODO(pasko): replace LINUX_DYNAMIC_LINKER with NACL_DYNAMIC_LINKER when we
- * implement dynamic linking.
- */
+   implement dynamic linking.  */
 
 /* Determine which dynamic linker to use depending on whether GLIBC or
    uClibc is the default C library and whether -muclibc or -mglibc has
@@ -193,30 +191,35 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_THREAD_SSP_OFFSET	(TARGET_64BIT ? 0x28 : 0x14)
 #endif
 
-/*
- * Because of NaCl's use of segment registers, negative offsets from gs: will
- * not work.  Hence we need to make TLS references explicitly compute the
- * tls base pointer and then indirect relative to it using the default
- * segment descriptor (DS).  That is, instead of
- *    movl gs:i@NTPOFF, %ecx
- * we use
- *   movl %gs:0, %eax
- *   movl i@NTPOFF(%eax), %ecx
- * There is a slight performance penalty for TLS accesses, but there does not
- * seem a way around it.
- */
+/* Because of NaCl's use of segment registers, negative offsets from gs: will
+   not work.  Hence we need to make TLS references explicitly compute the
+   tls base pointer and then indirect relative to it using the default
+   segment descriptor (DS).  That is, instead of
+      movl gs:i@NTPOFF, %ecx
+   we use
+     movl %gs:0, %eax
+     movl i@NTPOFF(%eax), %ecx
+   There is a slight performance penalty for TLS accesses, but there does not
+   seem a way around it.  */
 #undef TARGET_TLS_DIRECT_SEG_REFS_DEFAULT
 #define TARGET_TLS_DIRECT_SEG_REFS_DEFAULT 0
 
 /* TODO(pasko): eliminate the need to define linux-specific macros. Currently
- * Chromium build/build_config.h prevents us from eliminating these defines by
- * not recognizing __native_client__ as a platform. */
+   Chromium build/build_config.h prevents us from eliminating these defines by
+   not recognizing __native_client__ as a platform.  */
 #define LINUX_TARGET_OS_CPP_BUILTINS()				\
     do {							\
 	builtin_define_std ("unix");				\
 	builtin_assert ("system=unix");				\
 	builtin_assert ("system=posix");			\
     } while (0)
+
+/* When running in Native Client all inode numbers are identical.
+   TODO(pasko): re-enable inode numbers once the relevant bug is fixed:
+   http://code.google.com/p/nativeclient/issues/detail?id=1555  */
+#ifdef __native_client__
+#define HOST_LACKS_INODE_NUMBERS 1
+#endif
 
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()			\
@@ -227,7 +230,7 @@ Boston, MA 02111-1307, USA.  */
   }							\
   while (0)
 
-/* NaCl uses are using ILP32 model even on x86-84. */
+/* NaCl uses are using ILP32 model even on x86-84.  */
 #undef LONG_TYPE_SIZE
 #define LONG_TYPE_SIZE 32
 #define POINTER_SIZE 32
@@ -245,16 +248,16 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_SUBTARGET64_DEFAULT 0
 
 /* Configure script incorrectly detects this GAS capability on x86-64 and hence
- * forces JUMP_TABLES_IN_TEXT_SECTION which cannot validate in NaCl. */
+   forces JUMP_TABLES_IN_TEXT_SECTION which cannot validate in NaCl.  */
 #undef HAVE_AS_GOTOFF_IN_DATA
 #define HAVE_AS_GOTOFF_IN_DATA 1
 
 /* Configure script incorrectly detects HAVE_GAS_CFI_DIRECTIVE when readelf is
- * not found in PATH. */
+   not found in PATH.  */
 #undef HAVE_GAS_CFI_DIRECTIVE
 #define HAVE_GAS_CFI_DIRECTIVE 1
 
-/* NaCl reserves R15 and makes RBP special in x86-64 mode */
+/* NaCl reserves R15 and makes RBP special in x86-64 mode.  */
 #undef FIXED_REGISTERS
 #define FIXED_REGISTERS						\
 /*ax,dx,cx,bx,si,di,bp,sp,st,st1,st2,st3,st4,st5,st6,st7*/	\
