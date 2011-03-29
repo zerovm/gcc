@@ -2445,7 +2445,7 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be Linux ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu)
+nacl* | linux* | k*bsd*-gnu | kopensolaris*-gnu)
   version_type=linux
   need_lib_prefix=no
   need_version=no
@@ -2487,7 +2487,9 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu)
   # most powerpc-linux boxes support dynamic linking these days and
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
-  dynamic_linker='GNU/Linux ld.so'
+  if [ $host_os != 'nacl' ] ; then
+    dynamic_linker='GNU/Linux ld.so'
+  fi
   ;;
 
 netbsd*)
