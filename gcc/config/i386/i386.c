@@ -10112,7 +10112,7 @@ get_thread_pointer (int to_reg)
 {
   rtx tp, reg, insn;
 
-  if (TARGET_64BIT && TARGET_NACL)
+  if (TARGET_NACL && (TARGET_64BIT || TARGET_TLS_USE_CALL))
     {
       rtx rax = gen_rtx_REG (Pmode, AX_REG);
 
