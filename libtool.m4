@@ -2444,8 +2444,23 @@ linux*oldld* | linux*aout* | linux*coff*)
   dynamic_linker=no
   ;;
 
+nacl*)
+  version_type=linux
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+
+  # This implies no fast_install, which is unacceptable.
+  # Some rework will be needed to allow for fast_install
+  # before this can be enabled.
+  hardcode_into_libs=yes
+  ;;
+
 # This must be Linux ELF.
-nacl* | linux* | k*bsd*-gnu | kopensolaris*-gnu)
+linux* | k*bsd*-gnu | kopensolaris*-gnu)
   version_type=linux
   need_lib_prefix=no
   need_version=no
@@ -2487,9 +2502,7 @@ nacl* | linux* | k*bsd*-gnu | kopensolaris*-gnu)
   # most powerpc-linux boxes support dynamic linking these days and
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
-  if [ $host_os != 'nacl' ] ; then
-    dynamic_linker='GNU/Linux ld.so'
-  fi
+  dynamic_linker='GNU/Linux ld.so'
   ;;
 
 netbsd*)
