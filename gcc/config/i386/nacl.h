@@ -204,9 +204,6 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_TLS_DIRECT_SEG_REFS_DEFAULT
 #define TARGET_TLS_DIRECT_SEG_REFS_DEFAULT 0
 
-/* TODO(pasko): eliminate the need to define linux-specific macros. Currently
-   Chromium build/build_config.h prevents us from eliminating these defines by
-   not recognizing __native_client__ as a platform.  */
 #define LINUX_TARGET_OS_CPP_BUILTINS()				\
     do {							\
 	builtin_define_std ("unix");				\
