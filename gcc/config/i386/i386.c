@@ -2598,6 +2598,13 @@ override_options (bool main_args_p)
       sw = "attribute";
     }
 
+  if (TARGET_NACL)
+    {
+      align_jumps = 32;
+      align_labels = 32;
+      align_functions = 32;
+    }
+
 #ifdef SUBTARGET_OVERRIDE_OPTIONS
   SUBTARGET_OVERRIDE_OPTIONS;
 #endif
@@ -7466,7 +7473,7 @@ ix86_file_end (void)
 	  switch_to_section (get_named_section (decl, NULL, 0));
 
 	  if (TARGET_NACL)
-	    fprintf (asm_out_file, ".p2align %d\n", NACL_ALIGN_POW2);
+	    fprintf (asm_out_file, ".p2align %d\n", align_functions_log);
 	  (*targetm.asm_out.globalize_label) (asm_out_file, name);
 	  fputs ("\t.hidden\t", asm_out_file);
 	  assemble_name (asm_out_file, name);
@@ -7477,7 +7484,7 @@ ix86_file_end (void)
 	{
 	  switch_to_section (text_section);
 	  if (TARGET_NACL)
-	    fprintf (asm_out_file, ".p2align %d\n", NACL_ALIGN_POW2);
+	    fprintf (asm_out_file, ".p2align %d\n", align_functions_log);
 	  ASM_OUTPUT_LABEL (asm_out_file, name);
 	}
 

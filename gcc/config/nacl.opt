@@ -23,35 +23,5 @@ fcontrol-integrity
 Common Report Var(flag_control_integrity) Init(1)
 Expand indirect call, jmp, and rets
 
-falign-functions
-Common Report Var(align_functions,NACL_ALIGN_BYTES) Init(NACL_ALIGN_BYTES)
-Align the start of functions
-
-falign-functions=
-Common RejectNegative Joined UInteger
-
-falign-jumps
-Common Report Var(align_jumps,NACL_ALIGN_BYTES) Init(NACL_ALIGN_BYTES)
-Align labels which are only reached by jumping
-
-falign-jumps=
-Common RejectNegative Joined UInteger
-
-falign-labels
-Common Report Var(align_labels,NACL_ALIGN_BYTES) Init(NACL_ALIGN_BYTES)
-Align all labels
-
-falign-labels=
-Common RejectNegative Joined UInteger
-
-fnacl-library-mode
-Common Report Var(flag_nacl_library_mode,1) Init(0)
-
-fnacl-align-16
-Common Report Var(flag_nacl_align_pow2,4) Init(NACL_ALIGN_POW2)
-
-fnacl-align-32
-Common Report Var(flag_nacl_align_pow2,5)
-
 finstrument-for-thread-suspension
 Common Report Var(flag_instrument_for_thread_suspension)
