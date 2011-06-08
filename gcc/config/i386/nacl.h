@@ -37,6 +37,9 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (NativeClient)");
 
+/* Don't enclose system header files in extern "C" {...}.  */
+#define NO_IMPLICIT_EXTERN_C
+
 /* Provide a STARTFILE_SPEC.  Here we add
    the GNU/Linux magical crtbegin.o file (see crtstuff.c) which provides part of
    the support for getting C++ file-scope static object constructed before
