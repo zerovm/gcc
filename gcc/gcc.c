@@ -6806,10 +6806,7 @@ main (int argc, char **argv)
 
       /* Use the same thing in %o, unless cp->spec says otherwise.  */
 
-      if (strcmp(input_filename, "-lnosys") == 0)
-	outfiles[i] = NULL;
-      else
-	outfiles[i] = input_filename;
+      outfiles[i] = input_filename;
 
       /* Figure out which compiler from the file's suffix.  */
 

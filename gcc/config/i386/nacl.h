@@ -91,16 +91,11 @@ Boston, MA 02111-1307, USA.  */
   "%{Ym,*} %{Yd,*} %{Wa,*:%*} %{m32:--32} %{m64:--64} " \
   "%{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
 
-/* `crt_platform' contains low-level platform-specific intrinsics in C.  */
 #undef	LIB_SPEC
 #define LIB_SPEC \
   "%{pthread:-lpthread} \
-   %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc} \
-   -lnacl \
-   %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc} \
-   %{lnosys:-lnosys} \
-   -lcrt_platform \
-   %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}"
+   %{shared:-lc} \
+   %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}}"
 
 /* Define this so we can compile MS code for use with WINE.  */
 #define HANDLE_PRAGMA_PACK_PUSH_POP
