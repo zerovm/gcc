@@ -3246,7 +3246,7 @@ override_options (bool main_args_p)
 
   /* If using typedef char *va_list, signal that __builtin_va_start (&ap, 0)
      can be optimized to ap = __builtin_next_arg (0).  */
-  if (!TARGET_64BIT)
+  if (!TARGET_64BIT && !TARGET_NACL)
     targetm.expand_builtin_va_start = NULL;
 
   if (TARGET_64BIT)
@@ -6464,6 +6464,42 @@ ix86_build_builtin_va_list_abi (enum calling_abi abi)
 {
   tree f_gpr, f_fpr, f_ovf, f_sav, record, type_decl;
 
+  /* For i386 NaCl, use a structure of size 16, alignment 4,
+     for compatibility with PNaCl. Only the first 4 bytes
+     of the structure are used */
+  if (TARGET_NACL && !TARGET_64BIT)
+    {
+      tree f_ptr, f_pad1, f_pad2, f_pad3;
+      record = (*lang_hooks.types.make_type) (RECORD_TYPE);
+      type_decl = build_decl (TYPE_DECL, get_identifier ("__va_list_tag"), record);
+
+      f_ptr  = build_decl (FIELD_DECL, get_identifier ("ptr"),
+                           ptr_type_node);
+      f_pad1 = build_decl (FIELD_DECL, get_identifier ("pad1"),
+                           ptr_type_node);
+      f_pad2 = build_decl (FIELD_DECL, get_identifier ("pad2"),
+                           ptr_type_node);
+      f_pad3 = build_decl (FIELD_DECL, get_identifier ("pad3"),
+                           ptr_type_node);
+
+      DECL_FIELD_CONTEXT (f_ptr) = record;
+      DECL_FIELD_CONTEXT (f_pad1) = record;
+      DECL_FIELD_CONTEXT (f_pad2) = record;
+      DECL_FIELD_CONTEXT (f_pad3) = record;
+
+      TREE_CHAIN (record) = type_decl;
+      TYPE_NAME (record) = type_decl;
+      TYPE_FIELDS (record) = f_ptr;
+      TREE_CHAIN (f_ptr) = f_pad1;
+      TREE_CHAIN (f_pad1) = f_pad2;
+      TREE_CHAIN (f_pad2) = f_pad3;
+
+      layout_type (record);
+
+      /* The correct type is an array type of one element.  */
+      return build_array_type (record, build_index_type (size_zero_node));
+    }
+
   /* For i386 we use plain pointer to argument area.  */
   if (!TARGET_64BIT || abi == MS_ABI)
     return build_pointer_type (char_type_node);
@@ -6720,6 +6756,9 @@ is_va_list_char_pointer (tree type)
 {
   tree canonic;
 
+  if (TARGET_NACL)
+    return false;
+
   /* For 32-bit it is always true.  */
   if (!TARGET_64BIT)
     return true;
@@ -6737,6 +6776,19 @@ ix86_va_start (tree valist, rtx nextarg)
   tree f_gpr, f_fpr, f_ovf, f_sav;
   tree gpr, fpr, ovf, sav, t;
   tree type;
+
+  /* On NaCl 32, va_list is a structure. Use the first field. */
+  if (TARGET_NACL && !TARGET_64BIT)
+    {
+      tree f_ptr;
+      f_ptr = TYPE_FIELDS (TREE_TYPE (va_list_type_node));
+      valist = build1 (INDIRECT_REF, TREE_TYPE (TREE_TYPE (valist)),
+                       valist);
+      valist = build3 (COMPONENT_REF, TREE_TYPE(f_ptr),
+                       valist, f_ptr, NULL_TREE);
+      std_expand_builtin_va_start (valist, nextarg);
+      return;
+    }
 
   /* Only 64bit target needs something special.  */
   if (!TARGET_64BIT || is_va_list_char_pointer (TREE_TYPE (valist)))
@@ -6821,6 +6873,17 @@ ix86_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
   tree ptrtype;
   enum machine_mode nat_mode;
   int arg_boundary;
+
+  /* On NaCl32, va_list is a structure. Use the first field only. */
+  if (TARGET_NACL && !TARGET_64BIT)
+    {
+      tree f_ptr;
+      tree ptr;
+      f_ptr = TYPE_FIELDS (TREE_TYPE (va_list_type_node));
+      ptr = build3 (COMPONENT_REF, TREE_TYPE (f_ptr),
+                    build_va_arg_indirect_ref (valist), f_ptr, NULL_TREE);
+      return std_gimplify_va_arg_expr (ptr, type, pre_p, post_p);
+    }
 
   /* Only 64bit target needs something special.  */
   if (!TARGET_64BIT || is_va_list_char_pointer (TREE_TYPE (valist)))
@@ -30172,7 +30235,7 @@ ix86_canonical_va_list_type (tree type)
   else if (POINTER_TYPE_P (type) && POINTER_TYPE_P (TREE_TYPE(type)))
     type = TREE_TYPE (type);
 
-  if (TARGET_64BIT)
+  if (TARGET_64BIT || TARGET_NACL)
     {
       wtype = va_list_type_node;
 	  gcc_assert (wtype != NULL_TREE);
@@ -30192,6 +30255,10 @@ ix86_canonical_va_list_type (tree type)
 	}
       if (TYPE_MAIN_VARIANT (wtype) == TYPE_MAIN_VARIANT (htype))
 	return va_list_type_node;
+
+      if (TARGET_NACL && !TARGET_64BIT)
+        return NULL_TREE;
+
       wtype = sysv_va_list_type_node;
 	  gcc_assert (wtype != NULL_TREE);
       htype = type;
