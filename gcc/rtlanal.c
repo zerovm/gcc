@@ -3988,6 +3988,8 @@ nonzero_bits1 (const_rtx x, enum machine_mode mode, const_rtx known_x,
 	if (result_low > 0)
 	  nonzero &= ~(((HOST_WIDE_INT) 1 << result_low) - 1);
 
+#if 0
+	/* Disabled (http://gcc.gnu.org/bugzilla/show_bug.cgi?id=49504).  */
 #ifdef POINTERS_EXTEND_UNSIGNED
 	/* If pointers extend unsigned and this is an addition or subtraction
 	   to a pointer in Pmode, all the bits above ptr_mode are known to be
@@ -3996,6 +3998,7 @@ nonzero_bits1 (const_rtx x, enum machine_mode mode, const_rtx known_x,
 	    && (code == PLUS || code == MINUS)
 	    && REG_P (XEXP (x, 0)) && REG_POINTER (XEXP (x, 0)))
 	  nonzero &= GET_MODE_MASK (ptr_mode);
+#endif
 #endif
       }
       break;
