@@ -7145,6 +7145,13 @@ ix86_check_movabs (rtx insn, int opnum)
 {
   rtx set, mem;
 
+  /* In Native Client we can not use movabs because it assumes that
+     non-PIC module is loaded using fixed address.  In Native client
+     non-PIC module is loaded using fixed address *relative* *to* R15.
+     Probably good idea to replace it with %rip-based mov, but for now
+     just disable movabs to produce working binaries.  */
+  if (TARGET_NACL)
+    return false;
   set = PATTERN (insn);
   if (GET_CODE (set) == PARALLEL)
     set = XVECEXP (set, 0, 0);
