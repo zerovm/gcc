@@ -44,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
    the GNU/Linux magical crtbegin.o file (see crtstuff.c) which provides part of
    the support for getting C++ file-scope static object constructed before
    entering `main'.  */
-   
+
 #undef	STARTFILE_SPEC
 #if defined HAVE_LD_PIE
 #define STARTFILE_SPEC \
@@ -109,34 +109,8 @@ Boston, MA 02111-1307, USA.  */
 #define USE_LD_AS_NEEDED 1
 #endif
 
-/* TODO(pasko): replace LINUX_DYNAMIC_LINKER with NACL_DYNAMIC_LINKER when we
-   implement dynamic linking.  */
-
-/* Determine which dynamic linker to use depending on whether GLIBC or
-   uClibc is the default C library and whether -muclibc or -mglibc has
-   been passed to change the default.  */
-#if UCLIBC_DEFAULT
-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{mglibc:%{muclibc:%e-mglibc and -muclibc used together}" G ";:" U "}"
-#else
-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{muclibc:%{mglibc:%e-mglibc and -muclibc used together}" U ";:" G "}"
-#endif
-
-/* For most targets the following definitions suffice;
-   GLIBC_DYNAMIC_LINKER must be defined for each target using them, or
-   GLIBC_DYNAMIC_LINKER32 and GLIBC_DYNAMIC_LINKER64 for targets
-   supporting both 32-bit and 64-bit compilation.  */
-#define UCLIBC_DYNAMIC_LINKER "/lib/ld-uClibc.so.0"
-#define UCLIBC_DYNAMIC_LINKER32 "/lib/ld-uClibc.so.0"
-#define UCLIBC_DYNAMIC_LINKER64 "/lib/ld64-uClibc.so.0"
-#define LINUX_DYNAMIC_LINKER \
-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER)
-#define LINUX_DYNAMIC_LINKER32 \
-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER32, UCLIBC_DYNAMIC_LINKER32)
-#define LINUX_DYNAMIC_LINKER64 \
-  CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER64, UCLIBC_DYNAMIC_LINKER64)
-
-#define GLIBC_DYNAMIC_LINKER32 "/lib/ld-linux.so.2"
-#define GLIBC_DYNAMIC_LINKER64 "/lib64/ld-linux-x86-64.so.2"
+#define NACL_DYNAMIC_LINKER32 "/lib/ld-nacl-x86-32.so.1"
+#define NACL_DYNAMIC_LINKER64 "/lib64/ld-nacl-x86-64.so.1"
 
 /* Determine whether the entire c99 runtime
    is present in the runtime library.  */
@@ -161,8 +135,8 @@ Boston, MA 02111-1307, USA.  */
   %{!shared: \
     %{!static: \
       %{rdynamic:-export-dynamic} \
-      %{" SPEC_32 ":%{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER32 "}} \
-      %{" SPEC_64 ":%{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER64 "}}} \
+      %{" SPEC_32 ":%{!dynamic-linker:-dynamic-linker " NACL_DYNAMIC_LINKER32 "}} \
+      %{" SPEC_64 ":%{!dynamic-linker:-dynamic-linker " NACL_DYNAMIC_LINKER64 "}}} \
     %{static:-static}}"
 
 #undef LINK_GCC_C_SEQUENCE_SPEC
