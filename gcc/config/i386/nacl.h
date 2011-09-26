@@ -101,7 +101,7 @@ Boston, MA 02111-1307, USA.  */
 #define HANDLE_PRAGMA_PACK_PUSH_POP
 
 #if defined(HAVE_LD_EH_FRAME_HDR)
-#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#define LINK_EH_SPEC "--no-add-needed %{!static:--eh-frame-hdr} "
 #endif
 
 /* Use --as-needed -lgcc_s for eh support.  */
