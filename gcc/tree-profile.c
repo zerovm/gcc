@@ -436,35 +436,85 @@ tree_gen_ior_profiler (histogram_value value, unsigned tag, unsigned base)
 static void
 tree_gen_thread_suspension_instrumentation (edge e)
 {
-  static tree tree_suspend_thread_fn = NULL_TREE;
+  static tree suspend_thread_fn = NULL_TREE;
+  static tree thread_suspension_needed_var = NULL_TREE;
 
-  basic_block bb;
+  tree tmp_var;
+
+  basic_block bb_if;
+  basic_block bb_call;
+  basic_block bb_dest;
+
   gimple_stmt_iterator gsi;
   gimple stmt;
 
-  if (tree_suspend_thread_fn == NULL_TREE)
+  if (suspend_thread_fn == NULL_TREE)
     {
-      tree type = build_function_type (void_type_node, void_list_node);
-      tree id = get_identifier ("__nacl_suspend_thread_if_needed");
-      tree decl = build_decl (FUNCTION_DECL, id, type);
+      /* void __nacl_suspend_thread_if_needed (void);  */
 
-      tree libname = get_identifier ("__nacl_suspend_thread_if_needed");
+      suspend_thread_fn = build_decl (
+          FUNCTION_DECL,
+          get_identifier ("__nacl_suspend_thread_if_needed"),
+          build_function_type (void_type_node, void_list_node));
 
-      TREE_PUBLIC (decl) = 1;
-      DECL_EXTERNAL (decl) = 1;
+      TREE_PUBLIC (suspend_thread_fn) = 1;
+      DECL_EXTERNAL (suspend_thread_fn) = 1;
 
-      SET_DECL_ASSEMBLER_NAME (decl, libname);
+      SET_DECL_ASSEMBLER_NAME (
+          suspend_thread_fn,
+          get_identifier ("__nacl_suspend_thread_if_needed"));
 
-      tree_suspend_thread_fn = decl;
+      /* volatile int __nacl_thread_suspension_needed;  */
+
+      thread_suspension_needed_var = build_decl (
+          VAR_DECL,
+          get_identifier ("__nacl_thread_suspension_needed"),
+          integer_type_node);
+
+      TREE_STATIC (thread_suspension_needed_var) = 1;
+      TREE_PUBLIC (thread_suspension_needed_var) = 1;
+      DECL_EXTERNAL (thread_suspension_needed_var) = 1;
+      TREE_USED (thread_suspension_needed_var) = 1;
+      TREE_THIS_VOLATILE (thread_suspension_needed_var) = 1;
+
+      SET_DECL_ASSEMBLER_NAME (
+          thread_suspension_needed_var,
+          get_identifier ("__nacl_thread_suspension_needed"));
     }
 
-  bb = split_edge (e);
-  gsi = gsi_start_bb (bb);
+  /* tmp = __nacl_thread_suspension_needed;
+     if (tmp)
+       {
+         __nacl_suspend_thread_if_needed ();
+       }
 
-  stmt = gimple_build_call (tree_suspend_thread_fn, 0);
+     Temporary variable is needed to keep SSA happy.  */
 
-  gsi_insert_after (&gsi, stmt, GSI_NEW_STMT);
-  add_abnormal_goto_call_edges (gsi);
+  bb_dest = e->dest;
+
+  bb_if = split_edge (e);
+
+  gsi = gsi_start_bb (bb_if);
+  tmp_var = create_tmp_var (integer_type_node, NULL);
+  stmt = gimple_build_assign (tmp_var, thread_suspension_needed_var);
+  gsi_insert_before (&gsi, stmt, GSI_SAME_STMT);
+  stmt = gimple_build_cond (
+      NE_EXPR,
+      tmp_var,
+      build_int_cst (integer_type_node, 0),
+      NULL_TREE,
+      NULL_TREE);
+  gsi_insert_before (&gsi, stmt, GSI_SAME_STMT);
+
+  bb_call = split_edge (single_succ_edge (bb_if));
+
+  gsi = gsi_start_bb (bb_call);
+  stmt = gimple_build_call (suspend_thread_fn, 0);
+  gsi_insert_before (&gsi, stmt, GSI_SAME_STMT);
+
+  remove_edge (single_succ_edge (bb_if));
+  make_edge(bb_if, bb_dest, EDGE_FALSE_VALUE);
+  make_edge(bb_if, bb_call, EDGE_TRUE_VALUE);
 }
 
 /* Return 1 if tree-based profiling is in effect, else 0.
@@ -496,18 +546,49 @@ tree_profiling (void)
       basic_block bb;
       edge e;
       edge_iterator ei;
+      edge *edges;
+      int n;
+      int i;
 
+      /* Force back edges to be marked.  */
       mark_dfs_back_edges ();
 
+      /* Instrument edges.
+         Actual instrumentation adds basic blocks and adds/removes edges, thus
+         making iterators unhappy.  Build a list of edges to instrument before
+         changing anything.  */
+
+      /* Count back edges.  */
+      n = 0;
       FOR_EACH_BB (bb)
         {
           FOR_EACH_EDGE (e, ei, bb->preds)
             {
-              /* Instrument beginning of the function and back edges.  */
-              if (e->src == ENTRY_BLOCK_PTR
-                  || e->flags & EDGE_DFS_BACK)
-                tree_gen_thread_suspension_instrumentation (e);
+              if (e->flags & EDGE_DFS_BACK)
+                ++n;
             }
+        }
+
+      /* Add function entry edge at pos 0.  */
+      ++n;
+      edges = (edge *) alloca (n * sizeof (edge));
+      edges[0] = single_succ_edge (ENTRY_BLOCK_PTR);
+
+      /* Populate back edges.  */
+      i = 1;
+      FOR_EACH_BB (bb)
+        {
+          FOR_EACH_EDGE (e, ei, bb->preds)
+            {
+              if (e->flags & EDGE_DFS_BACK)
+                edges[i++] = e;
+            }
+        }
+
+      /* Instrument edges.  */
+      for (i = 0; i < n; ++i)
+        {
+          tree_gen_thread_suspension_instrumentation (edges[i]);
         }
 
       /* HACK: exit if we only need thread suspension instrumentation.  */
