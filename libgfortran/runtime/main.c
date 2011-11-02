@@ -117,6 +117,10 @@ store_exe_path (const char * argv0)
   memset (buf, 0, sizeof (buf));
 #ifdef HAVE_GETCWD
   cwd = getcwd (buf, sizeof (buf));
+  if (cwd == NULL)
+    {
+      cwd = "";
+    }
 #else
   cwd = "";
 #endif
