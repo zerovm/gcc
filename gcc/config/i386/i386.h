@@ -1572,6 +1572,7 @@ typedef struct ix86_args {
   int nregs;			/* # registers available for passing */
   int regno;			/* next available register number */
   int fastcall;			/* fastcall calling convention is used */
+  int pnaclcall;		/* pnaclcall calling convention is used */
   int sse_words;		/* # sse words passed so far */
   int sse_nregs;		/* # sse registers available for passing */
   int warn_avx;			/* True when we want to warn about AVX ABI.  */
@@ -2404,6 +2405,8 @@ struct machine_function GTY(())
   /* This value is used for amd64 targets and specifies the current abi
      to be used. MS_ABI means ms abi. Otherwise SYSV_ABI means sysv abi.  */
   int call_abi;
+  /* Indicates whether or not the function was declared as pnaclcall.  */
+  int pnaclcall;
 };
 
 #define ix86_stack_locals (cfun->machine->stack_locals)

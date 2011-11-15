@@ -4260,6 +4260,12 @@ ix86_handle_cconv_attribute (tree *node, tree name,
 
   if (TARGET_64BIT)
     {
+      /* Usually x86-64 does not have attributes so they warn here, but
+         we have added an attribute pnaclcall so allow that.  */
+      if (is_attribute_p ("pnaclcall", name))
+        /* Ignore the other i386 attributes and return.  */
+        return NULL_TREE;
+
       /* Do not warn when emulating the MS ABI.  */
       if (TREE_CODE (*node) != FUNCTION_TYPE || ix86_function_type_abi (*node)!=MS_ABI)
 	warning (OPT_Wattributes, "%qs attribute ignored",
@@ -4341,6 +4347,11 @@ ix86_comp_type_attributes (const_tree type1, const_tree type2)
   /* Check for mismatched sseregparm types.  */
   if (!lookup_attribute ("sseregparm", TYPE_ATTRIBUTES (type1))
       != !lookup_attribute ("sseregparm", TYPE_ATTRIBUTES (type2)))
+    return 0;
+
+  /* Check for mismatched pnaclcall types.  */
+  if (!lookup_attribute ("pnaclcall", TYPE_ATTRIBUTES (type1))
+      != !lookup_attribute ("pnaclcall", TYPE_ATTRIBUTES (type2)))
     return 0;
 
   /* Check for mismatched return types (cdecl vs stdcall).  */
@@ -4685,6 +4696,19 @@ ix86_cfun_abi (void)
 /* regclass.c  */
 extern void init_regs (void);
 
+/* Return true if the function is decorated with a pnaclcall attribute.  */
+static bool is_pnaclcall(const_tree fntype)
+{
+  return (fntype && lookup_attribute ("pnaclcall", TYPE_ATTRIBUTES (fntype)));
+}
+
+static bool ix86_cfun_pnaclcall (void)
+{
+  if (! cfun )
+    return 0;
+  return cfun->machine->pnaclcall;
+}
+
 /* Implementation of call abi switching target hook. Specific to FNDECL
    the specific call register sets are set. See also CONDITIONAL_REGISTER_USAGE
    for more details.  */
@@ -4692,9 +4716,15 @@ void
 ix86_call_abi_override (const_tree fndecl)
 {
   if (fndecl == NULL_TREE)
-    cfun->machine->call_abi = DEFAULT_ABI;
+    {
+      cfun->machine->call_abi = DEFAULT_ABI;
+      cfun->machine->pnaclcall = 0;
+    }
   else
-    cfun->machine->call_abi = ix86_function_type_abi (TREE_TYPE (fndecl));
+    {
+      cfun->machine->call_abi = ix86_function_type_abi (TREE_TYPE (fndecl));
+      cfun->machine->pnaclcall = is_pnaclcall (TREE_TYPE (fndecl));
+    }
 }
 
 /* MS and SYSV ABI have different set of call used registers.  Avoid expensive
@@ -4764,6 +4794,9 @@ init_cumulative_args (CUMULATIVE_ARGS *cum,  /* Argument info to initialize */
   cum->maybe_vaarg = (fntype
 		      ? (!prototype_p (fntype) || stdarg_p (fntype))
 		      : !libname);
+
+  if (TARGET_64BIT)
+    cum->pnaclcall = is_pnaclcall (fntype);
 
   if (!TARGET_64BIT)
     {
@@ -4946,7 +4979,8 @@ merge_classes (enum x86_64_reg_class class1, enum x86_64_reg_class class2)
 
 static int
 classify_argument (enum machine_mode mode, const_tree type,
-		   enum x86_64_reg_class classes[MAX_CLASSES], int bit_offset)
+		   enum x86_64_reg_class classes[MAX_CLASSES], int bit_offset,
+		   bool is_pnacl_cconv)
 {
   HOST_WIDE_INT bytes =
     (mode == BLKmode) ? int_size_in_bytes (type) : (int) GET_MODE_SIZE (mode);
@@ -4965,6 +4999,10 @@ classify_argument (enum machine_mode mode, const_tree type,
       int i;
       tree field;
       enum x86_64_reg_class subclasses[MAX_CLASSES];
+
+      /* Pass aggregates on the stack for PNaCl. */
+      if (TARGET_PNACL_CCONV || is_pnacl_cconv)
+	return 0;
 
       /* On x86-64 we pass structures larger than 32 bytes on the stack.  */
       if (bytes > 32)
@@ -5035,7 +5073,8 @@ classify_argument (enum machine_mode mode, const_tree type,
 		      num = classify_argument (TYPE_MODE (type), type,
 					       subclasses,
 					       (int_bit_position (field)
-						+ bit_offset) % 256);
+						+ bit_offset) % 256,
+						is_pnacl_cconv);
 		      if (!num)
 			return 0;
 		      for (i = 0; i < num; i++)
@@ -5055,7 +5094,8 @@ classify_argument (enum machine_mode mode, const_tree type,
 	  {
 	    int num;
 	    num = classify_argument (TYPE_MODE (TREE_TYPE (type)),
-				     TREE_TYPE (type), subclasses, bit_offset);
+				     TREE_TYPE (type), subclasses, bit_offset,
+				     is_pnacl_cconv);
 	    if (!num)
 	      return 0;
 
@@ -5086,7 +5126,8 @@ classify_argument (enum machine_mode mode, const_tree type,
 
 		  num = classify_argument (TYPE_MODE (TREE_TYPE (field)),
 					   TREE_TYPE (field), subclasses,
-					   bit_offset);
+					   bit_offset,
+					   is_pnacl_cconv);
 		  if (!num)
 		    return 0;
 		  for (i = 0; i < num; i++)
@@ -5327,10 +5368,10 @@ classify_argument (enum machine_mode mode, const_tree type,
    class.  Return 0 iff parameter should be passed in memory.  */
 static int
 examine_argument (enum machine_mode mode, const_tree type, int in_return,
-		  int *int_nregs, int *sse_nregs)
+		     int *int_nregs, int *sse_nregs, bool is_pnacl_cconv)
 {
   enum x86_64_reg_class regclass[MAX_CLASSES];
-  int n = classify_argument (mode, type, regclass, 0);
+  int n = classify_argument (mode, type, regclass, 0, is_pnacl_cconv);
 
   *int_nregs = 0;
   *sse_nregs = 0;
@@ -5370,7 +5411,7 @@ examine_argument (enum machine_mode mode, const_tree type, int in_return,
 static rtx
 construct_container (enum machine_mode mode, enum machine_mode orig_mode,
 		     const_tree type, int in_return, int nintregs, int nsseregs,
-		     const int *intreg, int sse_regno)
+		     const int *intreg, int sse_regno, bool is_pnacl_cconv)
 {
   /* The following variables hold the static issued_error state.  */
   static bool issued_sse_arg_error;
@@ -5388,11 +5429,11 @@ construct_container (enum machine_mode mode, enum machine_mode orig_mode,
   rtx exp[MAX_CLASSES];
   rtx ret;
 
-  n = classify_argument (mode, type, regclass, 0);
+  n = classify_argument (mode, type, regclass, 0, is_pnacl_cconv);
   if (!n)
     return NULL;
   if (!examine_argument (mode, type, in_return, &needed_intregs,
-			 &needed_sseregs))
+			 &needed_sseregs, is_pnacl_cconv))
     return NULL;
   if (needed_intregs > nintregs || needed_sseregs > nsseregs)
     return NULL;
@@ -5666,7 +5707,7 @@ function_arg_advance_64 (CUMULATIVE_ARGS *cum, enum machine_mode mode,
   if (!named && VALID_AVX256_REG_MODE (mode))
     return;
 
-  if (!examine_argument (mode, type, 0, &int_nregs, &sse_nregs))
+  if (!examine_argument (mode, type, 0, &int_nregs, &sse_nregs, cum->pnaclcall))
     cum->words += words;
   else if (sse_nregs <= cum->sse_nregs && int_nregs <= cum->nregs)
     {
@@ -5882,7 +5923,7 @@ function_arg_64 (CUMULATIVE_ARGS *cum, enum machine_mode mode,
   return construct_container (mode, orig_mode, type, 0, cum->nregs,
 			      cum->sse_nregs,
 			      &x86_64_int_parameter_registers [cum->regno],
-			      cum->sse_regno);
+			      cum->sse_regno, cum->pnaclcall);
 }
 
 static rtx
@@ -6180,7 +6221,7 @@ function_value_32 (enum machine_mode orig_mode, enum machine_mode mode,
 
 static rtx
 function_value_64 (enum machine_mode orig_mode, enum machine_mode mode,
-		   const_tree valtype)
+		   const_tree valtype, bool is_pnacl_cconv)
 {
   rtx ret;
 
@@ -6210,7 +6251,7 @@ function_value_64 (enum machine_mode orig_mode, enum machine_mode mode,
 
   ret = construct_container (mode, orig_mode, valtype, 1,
 			     X86_64_REGPARM_MAX, X86_64_SSE_REGPARM_MAX,
-			     x86_64_int_return_registers, 0);
+			     x86_64_int_return_registers, 0, is_pnacl_cconv);
 
   /* For zero sized structures, construct_container returns NULL, but we
      need to keep rest of compiler happy by returning meaningful value.  */
@@ -6260,7 +6301,7 @@ ix86_function_value_1 (const_tree valtype, const_tree fntype_or_decl,
   if (TARGET_64BIT && ix86_function_type_abi (fntype) == MS_ABI)
     return function_value_ms_64 (orig_mode, mode);
   else if (TARGET_64BIT)
-    return function_value_64 (orig_mode, mode, valtype);
+    return function_value_64 (orig_mode, mode, valtype, is_pnaclcall (fntype));
   else
     return function_value_32 (orig_mode, mode, fntype, fn);
 }
@@ -6330,10 +6371,12 @@ return_in_memory_32 (const_tree type, enum machine_mode mode)
 }
 
 static int ATTRIBUTE_UNUSED
-return_in_memory_64 (const_tree type, enum machine_mode mode)
+return_in_memory_64 (const_tree type, enum machine_mode mode,
+		   bool is_pnacl_cconv)
 {
   int needed_intregs, needed_sseregs;
-  return !examine_argument (mode, type, 1, &needed_intregs, &needed_sseregs);
+  return !examine_argument (mode, type, 1, &needed_intregs, &needed_sseregs,
+		   is_pnacl_cconv);
 }
 
 static int ATTRIBUTE_UNUSED
@@ -6363,7 +6406,9 @@ ix86_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
       if (ix86_function_type_abi (fntype) == MS_ABI)
 	return return_in_memory_ms_64 (type, mode);
       else
-	return return_in_memory_64 (type, mode);
+	/* NOTE: fntype was meant to be unused, but we need to know
+	   if a call was a pnaclcall.  */
+	return return_in_memory_64 (type, mode, is_pnaclcall (fntype));
     }
   else
     return return_in_memory_32 (type, mode);
@@ -6382,7 +6427,7 @@ ix86_sol10_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED
   enum machine_mode mode = type_natural_mode (type, NULL);
 
   if (TARGET_64BIT)
-    return return_in_memory_64 (type, mode);
+    return return_in_memory_64 (type, mode, is_pnaclcall (fntype));
 
   if (mode == BLKmode)
     return 1;
@@ -6927,7 +6972,7 @@ ix86_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
       container = construct_container (nat_mode, TYPE_MODE (type),
 				       type, 0, X86_64_REGPARM_MAX,
 				       X86_64_SSE_REGPARM_MAX, intreg,
-				       0);
+				       0, ix86_cfun_pnaclcall());
       break;
     }
 
@@ -6945,7 +6990,8 @@ ix86_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
       lab_false = create_artificial_label ();
       lab_over = create_artificial_label ();
 
-      examine_argument (nat_mode, type, 0, &needed_intregs, &needed_sseregs);
+      examine_argument (nat_mode, type, 0, &needed_intregs, &needed_sseregs,
+				       ix86_cfun_pnaclcall());
 
       need_temp = (!REG_P (container)
 		   && ((needed_intregs && TYPE_ALIGN (type) > 64)
@@ -30159,6 +30205,8 @@ static const struct attribute_spec ix86_attribute_table[] =
   { "fastcall",  0, 0, false, true,  true,  ix86_handle_cconv_attribute },
   /* Cdecl attribute says the callee is a normal C declaration */
   { "cdecl",     0, 0, false, true,  true,  ix86_handle_cconv_attribute },
+  /* pnaclcall attribute says we are using the PNaCl x86_64 calling conv. */
+  { "pnaclcall", 0, 0, false, true, true, ix86_handle_cconv_attribute },
   /* Regparm attribute specifies how many integer arguments are to be
      passed in registers.  */
   { "regparm",   1, 1, false, true,  true,  ix86_handle_cconv_attribute },

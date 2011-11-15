@@ -22,3 +22,8 @@
 mtls-use-call
 Target Var(TARGET_TLS_USE_CALL) Init(0)
 Use a function call rather than direct segment register access for TLS
+
+mpnacl-cconv
+Target Var(TARGET_PNACL_CCONV) Init(0)
+Use the PNaCl calling convention on x86-64 and pass by-value structures
+and unions on the stack instead of registers.

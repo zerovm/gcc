@@ -1826,6 +1826,27 @@ struct rtl_opt_pass pass_instantiate_virtual_regs =
  }
 };
 
+/* HACK: If |maybe_call| is a call expression, grab additional type attributes
+   from the expression (e.g., from a function pointer type) which may not
+   have been present in a function decl.  This must NOT affect the original
+   function type/decl, so make a copy if it really changed.  We may be able
+   to narrow this hack to just propagate the "pnaclcall" attribute.  */
+static tree copy_attributes_if_call (const_tree maybe_call, const_tree fntype) {
+  if (TREE_CODE (maybe_call) == CALL_EXPR)
+    {
+      tree new_attributes = merge_type_attributes(fntype,
+		  TREE_TYPE (TREE_TYPE (CALL_EXPR_FN (maybe_call))));
+      if (!attribute_list_equal (TYPE_ATTRIBUTES (fntype), new_attributes))
+		{
+          tree new_fntype = copy_node (fntype);
+          TYPE_ATTRIBUTES (new_fntype) = new_attributes;
+          return new_fntype;
+	    }
+      return fntype;
+    }
+  return fntype;
+}
+
 
 /* Return 1 if EXP is an aggregate type (or a value with aggregate type).
    This means a type for which function calls must pass an address to the
@@ -1853,10 +1874,14 @@ aggregate_value_p (const_tree exp, const_tree fntype)
 	fntype = (fndecl
 		  ? TREE_TYPE (fndecl)
 		  : TREE_TYPE (TREE_TYPE (CALL_EXPR_FN (fntype))));
+	/* HACK to grab attributes from the callexp type as well as the decl.  */
+	fntype = copy_attributes_if_call (exp, fntype);
 	break;
       case FUNCTION_DECL:
 	fndecl = fntype;
 	fntype = TREE_TYPE (fndecl);
+	/* HACK to grab attributes from the callexp type as well as the decl.  */
+	fntype = copy_attributes_if_call (exp, fntype);
 	break;
       case FUNCTION_TYPE:
       case METHOD_TYPE:
