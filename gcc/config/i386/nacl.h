@@ -268,3 +268,12 @@ Boston, MA 02111-1307, USA.  */
 #define DWARF2_ADDR_SIZE \
     (TARGET_NACL ? (TARGET_64BIT ? 8 : 4) : \
                    (POINTER_SIZE / BITS_PER_UNIT))
+
+/* -Os is broken and we aren't putting the work into fixing it.
+   See http://code.google.com/p/nativeclient/issues/detail?id=2284  */
+#undef  SUBTARGET_OVERRIDE_OPTIONS
+#define SUBTARGET_OVERRIDE_OPTIONS					      \
+  do {									      \
+    if (TARGET_NACL && optimize_size)					      \
+      error ("-Os is not supported by the Native Client compiler");	      \
+  } while (0)
