@@ -196,6 +196,7 @@ Boston, MA 02111-1307, USA.  */
     {							\
 	LINUX_TARGET_OS_CPP_BUILTINS();			\
 	builtin_define ("__native_client__=1");		\
+	builtin_define ("__LITTLE_ENDIAN__");		\
   }							\
   while (0)
 
