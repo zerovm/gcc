@@ -9082,6 +9082,42 @@ ix86_lea_decompose_address (rtx addr, struct ix86_address *out)
   return retval;
 }
 
+
+/* Returns true if NaCl-special registers are used: %rbp, %rsp, %rip.  */
+int
+nacl_address_uses_special_registers (rtx op)
+{
+  if (TARGET_NACL)
+    {
+      struct ix86_address parts;
+      rtx symbol;
+      int ok;
+
+      ok = ix86_lea_decompose_address (op, &parts);
+      gcc_assert (ok);
+
+      /* Check for %rbp/%rsp.  */
+      if (parts.base &&
+	  (REGNO (parts.base) == SP_REG || REGNO (parts.base) == BP_REG))
+	return 1;
+
+      /* Checks for %rip are borrowed from print_operand_address_parts.  */
+      if (!parts.base && !parts.index)
+	{
+	  symbol = parts.disp;
+	  if (GET_CODE (symbol) == CONST
+	      && GET_CODE (XEXP (symbol, 0)) == PLUS
+	      && CONST_INT_P (XEXP (XEXP (symbol, 0), 1)))
+	    symbol = XEXP (XEXP (symbol, 0), 0);
+	  if (GET_CODE (symbol) == SYMBOL_REF ||
+	      GET_CODE (symbol) == LABEL_REF)
+	    return 1;
+	}
+    }
+
+  return 0;
+}
+
 int
 lea_match_address_operand (rtx op, enum machine_mode mode)
 {
