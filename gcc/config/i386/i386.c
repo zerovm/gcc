@@ -9377,6 +9377,25 @@ ix86_decompose_address (rtx addr, struct ix86_address *out)
 	    return 0;
 	}
     }
+  /* Disallow direct access to addresses between 2GB and 4GB.
+
+     Example problem code:
+     int f()
+       {
+         unsigned int x = 0xf2a3e218;
+         return ((int*)x)[0];
+       }
+
+     Incorrect assembly generated with -O2:
+	      movl	-224140776(%r15), %eax
+
+     Correct assembly generated with -O2:
+	      movl	$4070826520, %eax
+	      movl	%nacl:(%r15,%rax), %eax  */
+  if (TARGET_64BIT && TARGET_NACL
+      && !index_reg && base_reg && REGNO (base_reg) == R15_REG
+      && GET_CODE (disp) == CONST_INT && INTVAL (disp) < 0)
+    return 0;
 
   /* Allow arg pointer and stack pointer as index if there is not scaling.  */
   if (base_reg && index_reg && scale == 1
