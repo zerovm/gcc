@@ -4198,6 +4198,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	  switches[n_switches].args = 0;
 	  switches[n_switches].live_cond = 0;
 	  switches[n_switches].validated = 0;
+	  switches[n_switches].ordering = 0;
 	  n_switches++;
 	}
       else if (strncmp (argv[i], "-Wl,", 4) == 0)
@@ -4236,7 +4237,8 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	  switches[n_switches].part1 = infiles[n_infiles++].name + 1;
 	  switches[n_switches].args = 0;
 	  switches[n_switches].live_cond = 1;
-	  switches[n_switches++].validated = 1;
+	  switches[n_switches].validated = 1;
+	  switches[n_switches++].ordering = 0;
 	}
       else if (strncmp (argv[i], "-l", 2) == 0)
 	{
@@ -4245,7 +4247,8 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	  switches[n_switches].part1 = infiles[n_infiles++].name + 1;
 	  switches[n_switches].args = 0;
 	  switches[n_switches].live_cond = 1;
-	  switches[n_switches++].validated = 1;
+	  switches[n_switches].validated = 1;
+	  switches[n_switches++].ordering = 0;
 	}
       else if (strcmp (argv[i], "-wrapper") == 0)
         i++;
