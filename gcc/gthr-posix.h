@@ -51,7 +51,7 @@ typedef struct timespec __gthread_time_t;
 
 /* POSIX like conditional variables are supported.  Please look at comments
    in gthr.h for details. */
-#define __GTHREAD_HAS_COND	1	
+#define __GTHREAD_HAS_COND	1
 
 #define __GTHREAD_MUTEX_INIT PTHREAD_MUTEX_INITIALIZER
 #define __GTHREAD_ONCE_INIT PTHREAD_ONCE_INIT
@@ -234,11 +234,43 @@ __gthread_active_p (void)
 
 #else /* neither FreeBSD nor Solaris */
 
+/* For a program to be multi-threaded the only thing that it certainly must
+   be using is pthread_create.  However, there may be other libraries that
+   intercept pthread_create with their own definitions to wrap pthreads
+   functionality for some purpose.  In those cases, pthread_create being
+   defined might not necessarily mean that libpthread is actually linked
+   in.
+
+   For the GNU C library, we can use a known internal name.  This is always
+   available in the ABI, but no other library would define it.  That is
+   ideal, since any public pthread function might be intercepted just as
+   pthread_create might be.  __pthread_key_create is an "internal"
+   implementation symbol, but it is part of the public exported ABI.  Also,
+   it's among the symbols that the static libpthread.a always links in
+   whenever pthread_create is used, so there is no danger of a false
+   negative result in any statically-linked, multi-threaded program.
+
+   For others, we choose pthread_cancel as a function that seems unlikely
+   to be redefined by an interceptor library.  The bionic (Android) C
+   library does not provide pthread_cancel, so we do use pthread_create
+   there (and interceptor libraries lose).  */
+
+#ifdef __GLIBC__
+__gthrw2(__gthrw_(__pthread_key_create),
+	 __pthread_key_create,
+	 pthread_key_create)
+# define GTHR_ACTIVE_PROXY	__gthrw_(__pthread_key_create)
+#elif defined (__BIONIC__)
+# define GTHR_ACTIVE_PROXY	__gthrw_(pthread_create)
+#else
+# define GTHR_ACTIVE_PROXY	__gthrw_(pthread_cancel)
+#endif
+
 static inline int
 __gthread_active_p (void)
 {
-  static void *const __gthread_active_ptr 
-    = __extension__ (void *) &__gthrw_(pthread_cancel);
+  static void *const __gthread_active_ptr
+    = __extension__ (void *) &GTHR_ACTIVE_PROXY;
   return __gthread_active_ptr != 0;
 }
 
