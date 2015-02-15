@@ -51,7 +51,7 @@ cc1 -E %{traditional|ftraditional|traditional-cpp:-traditional-cpp}
 --no-add-needed %{shared:--eh-frame-hdr} %{!m32:-m elf64_nacl} %{m32:-m elf_nacl}   %{!static:-static} %{!m32:-T ldscripts/elf64_nacl.x.static} %{m32:-T ldscripts/elf_nacl.x.static}
 
 *lib:
-%{pthread:-lpthread -lpth -lcontext}    %{shared:-lc}    %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc} -lzrt -lfs -ltar -lstdc++ 
+%{pthread:-lpthread -lpth -lcontext}    %{shared:-lc}    %{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc} %{archivemount:-lfs -lfuseglue -larchivemount -larchive -lfuse -lz -lbz2} -lzrt -lfs -ltar -lfuseglue -lrt -ldl -lpthread -lpth -lcontext -lstdc++ 
 
 *mfwrap:
  %{fmudflap|fmudflapth:  --wrap=malloc --wrap=free --wrap=calloc --wrap=realloc --wrap=mmap --wrap=munmap --wrap=alloca} %{fmudflapth: --wrap=pthread_create} %{fmudflap|fmudflapth: --wrap=main}
